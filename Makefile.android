@@ -1,0 +1,49 @@
+
+APINAME	= android-17
+APIJAR	= ${ANDROID_SDK_ROOT}/platforms/${APINAME}/android.jar
+
+API     = android-9
+SDK		= ${ANDROID_SDK_ROOT}
+NDK		= ${ANDROID_NDK_ROOT}
+UNAME  := $(shell uname)
+HOST   := $(shell echo ${UNAME} | tr '[:upper:]' '[:lower:]')-x86
+
+GCC_VERSION=4.4.3
+
+ifeq (${ABI}, x86)
+        NDK_ARCH           := arch-x86
+        BIN_PREFIX         := i686-linux-android-
+        TOOLCHAIN          := x86-${GCC_VERSION}
+        CPPFLAGS           := ${CPPFLAGS} -march=i686
+        API                := android-9
+else
+        NDK_ARCH           := arch-arm
+        BIN_PREFIX         := arm-linux-androideabi-
+        TOOLCHAIN          := arm-linux-androideabi-${GCC_VERSION}
+        CPPFLAGS           := ${CPPFLAGS} -marm
+        DEFINES            := ${DEFINES} -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__
+
+        ifeq (${ABI}, armeabi)
+                CPPFLAGS   := ${CPPFLAGS} -march=armv5te -mtune=xscale -mfloat-abi=soft
+        else
+                override ABI = armeabi-v7a
+                DEFINES    := ${DEFINES} -DARCH_ARMEABIV7A
+                CPPFLAGS   := ${CPPFLAGS} -march=armv7-a -mfpu=vfp -mfloat-abi=softfp
+                LDFLAGS    := -Wl,--fix-cortex-a8
+        endif
+endif
+
+DEFINES               := ${DEFINES} -DANDROID
+override PLATFORM      = android/${ABI}
+NDK_TOOL_PREFIX        = ${NDK}/toolchains/${TOOLCHAIN}/prebuilt/${HOST}/bin/${BIN_PREFIX}
+SYSROOT                = ${NDK}/platforms/${API}/${NDK_ARCH}
+CPPFLAGS              := ${CPPFLAGS} --sysroot=${SYSROOT} -mandroid -fpic -ffunction-sections -fdata-sections -fstrict-aliasing -fvisibility=hidden -Wno-psabi -MMD
+CXXFLAGS              := ${CXXFLAGS} -fno-rtti -fno-exceptions
+LDFLAGS               := ${LDFLAGS} --sysroot=${SYSROOT} -Wl,--no-undefined -Wl,--gc-sections
+CXX                    = ${NDK_TOOL_PREFIX}g++ ${DEFINES}
+CC                     = ${NDK_TOOL_PREFIX}gcc ${DEFINES}
+STRIP                  = ${NDK_TOOL_PREFIX}strip ${STRIPFLAGS}
+LD                     = ${NDK_TOOL_PREFIX}g++ ${LDFLAGS}
+AR                     = ${NDK_TOOL_PREFIX}ar crs
+
+export CPPFLAGS CXXFLAGS LDFLAGS CXX CC STRIP LD AR DEFINES PLATFORM

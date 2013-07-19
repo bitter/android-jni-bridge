@@ -1,0 +1,16 @@
+
+APINAME	= jdk-6
+APIJAR	= /System/Library/Frameworks/JavaVM.framework/Classes/classes.jar
+
+DEFINES               := ${DEFINES} -DMACOSX
+CPPFLAGS              := ${CPPFLAGS} -fpic -ffunction-sections -fdata-sections -fvisibility=hidden -MMD
+CPPFLAGS              := ${CPPFLAGS} -I/System/Library/Frameworks/JavaVM.framework/Headers
+CXXFLAGS              := ${CXXFLAGS} -fno-rtti -fno-exceptions
+LDFLAGS               := ${LDFLAGS}
+CXX                    = g++ ${DEFINES}
+CC                     = gcc ${DEFINES}
+STRIP                  = strip ${STRIPFLAGS}
+LD                     = g++ ${LDFLAGS}
+AR                     = ar crs
+
+export CPPFLAGS CXXFLAGS LDFLAGS CXX CC STRIP LD AR DEFINES

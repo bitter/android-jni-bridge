@@ -1,0 +1,17 @@
+
+BUILDDIR	= .
+SRCS		:= $(wildcard *.cpp)
+OBJS		:= $(addprefix ${BUILDDIR}/,$(SRCS:%.cpp=%.o))
+
+static-lib: ${BUILDDIR}/${LIBNAME} ;
+
+compile: ${OBJS} ;
+
+${BUILDDIR}/${LIBNAME}: ${OBJS}
+	${AR} $@ $^
+
+${BUILDDIR}/%.o: %.cpp *.h | ${BUILDDIR}
+	$(COMPILE.cpp) $(OUTPUT_OPTION) $<
+
+${BUILDDIR}:
+	@mkdir -p ${BUILDDIR}
