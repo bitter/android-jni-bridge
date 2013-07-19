@@ -8,8 +8,14 @@ endif
 
 LIBNAME		= lib${APINAME}-jni.a
 
-JAVA		= java
-JAVAC		= javac
+ifdef (${JAVAHOME})
+	JAVA		= ${JAVA_HOME}/bin/java
+	JAVAC		= ${JAVA_HOME}/bin/javac
+else
+	JAVA		= java
+	JAVAC		= javac
+endif
+
 JAVAFLAGS	= -XX:MaxPermSize=128M
 
 CPPFLAGS	+= -g0 -O2 -Wall -Werror -Wno-long-long
