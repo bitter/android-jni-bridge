@@ -41,9 +41,17 @@ sub BuildAndroid
 sub ZipIt
 {
 	system("mkdir -p build/temp/include") && die("Failed to create temp directory.");
+
+	# write build info
+	my $git_info = qx(git symbolic-ref -q HEAD && git rev-parse HEAD);
+	open(BUILD_INFO_FILE, '>', "build/temp/build.txt") or die("Unable to write build information to build/temp/build.txt");
+	print BUILD_INFO_FILE "$git_info";
+	close(BUILD_INFO_FILE);
+
+	# create zip
 	system("cp build/$api/source/*.h build/temp/include") && die("Failed to copy headers.");
 	system("cd build/$api; zip ../builds.zip -r android/*/*.a") && die("Failed to package libraries into zip file.");
-	system("cd build/temp; zip ../builds.zip -r include") && die("Failed to package headers into zip file.");
+	system("cd build/temp; zip ../builds.zip -r build.txt include") && die("Failed to package headers into zip file.");
 	system("rm -r build/temp") && die("Unable to remove temp directory.");
 }
 
