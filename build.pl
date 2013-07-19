@@ -8,22 +8,22 @@ use warnings;
 my $api = "android-17";
 
 my @classes = (
-	'android::Manifest_permission',
-	'android::app::Activity',
-	'android::content::Context',
-	'android::hardware::display::DisplayManager',
-	'android::os::Build',
-	'android::os::Build_VERSION',
-	'android::os::Environment',
-	'android::os::Vibrator',
-	'android::provider::Settings_Secure',
-	'android::telephony::TelephonyManager',
-	'android::view::Display',
-	'android::view::WindowManager',
-	'android::webkit::MimeTypeMap',
-	'java::lang::System',
-	'java::lang::ClassCastException',
-	'java::lang::UnsatisfiedLinkError'
+	'::android::Manifest_permission',
+	'::android::app::Activity',
+	'::android::content::Context',
+	'::android::hardware::display::DisplayManager',
+	'::android::os::Build',
+	'::android::os::Build_VERSION',
+	'::android::os::Environment',
+	'::android::os::Vibrator',
+	'::android::provider::Settings_Secure',
+	'::android::telephony::TelephonyManager',
+	'::android::view::Display',
+	'::android::view::WindowManager',
+	'::android::webkit::MimeTypeMap',
+	'::java::lang::System',
+	'::java::lang::ClassCastException',
+	'::java::lang::UnsatisfiedLinkError'
 );
 
 sub BuildAndroid

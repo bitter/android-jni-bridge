@@ -12,7 +12,12 @@ public class APIGenerator
 		"Assert", "asm", "namespace"
 	}));
 
-	final Set<Class> m_VisitedClasses = new LinkedHashSet<Class>();
+	static final Comparator<Class> CLASSNAME_COMPARATOR = new Comparator<Class>() {
+		public int compare(Class lhs, Class rhs) { return lhs.getName().compareTo(rhs.getName()); }
+	};
+
+	final Set<Class> m_AllClasses = new TreeSet<Class>(CLASSNAME_COMPARATOR);
+	final Set<Class> m_VisitedClasses = new TreeSet<Class>(CLASSNAME_COMPARATOR);
 	final Set<Class> m_DependencyChain = new LinkedHashSet<Class>();
 
 	public static void main(String[] argsArray) throws Exception
@@ -46,28 +51,29 @@ public class APIGenerator
 
 	public void collectDependencies(JarFile file, LinkedList<String> args) throws Exception
 	{
+		System.err.format("Loading classes from '%s'\n", file.getName());
 		URLClassLoader customClasses = new URLClassLoader(new URL[]{new File(file.getName()).toURI().toURL()}, null);
 		Enumeration<JarEntry> entries = file.entries();
 		while (entries.hasMoreElements())
 		{
 			String name = entries.nextElement().getName();
 			if (name.endsWith(".class"))
+				m_AllClasses.add(customClasses.loadClass(name.substring(0, name.length() - 6).replace("/", ".")));
+		}
+		System.err.format("Searching for candidates\n");
+		for (Class clazz : m_AllClasses)
+		{
+			String cppClassName = getClassName(clazz);
+			for (String arg : args)
 			{
-				String className = name.substring(0, name.length() - 6).replace("/", ".");
-				String cppClassName = className.replace(".", "::").replace("$", "_");
-				for (String arg : args)
-				{
-					if (Pattern.matches(arg, cppClassName))
-					{
-						int nClasses = m_DependencyChain.size();
-						collectDependencies(customClasses.loadClass(className));
-						System.err.format("[%d][%d]\t%s\n", m_DependencyChain.size(), m_DependencyChain.size() - nClasses, cppClassName);
-						break;						
-					}
-				}
+				if (!Pattern.matches(arg, cppClassName))
+					continue;
+				int nClasses = m_DependencyChain.size();
+				collectDependencies(clazz);
+				System.err.format("[%d][%d]\t%s\n", m_DependencyChain.size(), m_DependencyChain.size() - nClasses, cppClassName);
+				break;
 			}
 		}
-		args.clear();
 	}
 
 	public void collectDependencies(Class clazz) throws Exception
@@ -360,6 +366,7 @@ public class APIGenerator
 
 	private void print(String dst) throws Exception
 	{
+		System.err.println("Generating cpp code");
 		// Implement classes
 		for (Class clazz : m_VisitedClasses)
 		{
@@ -369,6 +376,7 @@ public class APIGenerator
 			source.close();
 		}
 
+		System.err.println("Creating header file");
 		PrintStream header = new PrintStream(new FileOutputStream(new File(dst, "API.h")));
 		header.format("#pragma once\n");
 		header.format("#include \"APIHelper.h\"\n");
