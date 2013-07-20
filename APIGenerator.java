@@ -419,6 +419,9 @@ public class APIGenerator
 		File templateFile = new File("templates", clazz.getName() + ".h");
 		boolean hasTemplate  = templateFile.exists();
 
+/* example ------------------
+	static ::java::util::Comparator& fCASE_INSENSITIVE_ORDER();
+*/
 		for (Field field : clazz.getDeclaredFields())
 		{
 			if (!isValid(field))
@@ -430,6 +433,9 @@ public class APIGenerator
 				getFieldName(field),
 				isStatic(field) ? "" : " const");
 		}
+/* example ------------------
+	jni::Array< ::java::lang::String > Split(const ::java::lang::String& arg0, const ::jint& arg1) const;
+*/
 		for (Method method : clazz.getDeclaredMethods())
 		{
 			if (!isValid(method))
@@ -441,6 +447,10 @@ public class APIGenerator
 				getParameterSignature(method.getParameterTypes()),
 				isStatic(method) ? "" : " const");
 		}
+/* example ------------------
+	static jobject __Constructor(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2);
+	String(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2) : ::java::lang::Object(__Constructor(arg0, arg1, arg2)) { __Initialize(); }
+*/
 		for (Constructor constructor : clazz.getDeclaredConstructors())
 		{
 			if (!isValid(constructor, clazz))
@@ -493,6 +503,14 @@ public class APIGenerator
 
 	private void implementClassMembers(PrintStream out, Class clazz) throws Exception
 	{
+/* example ------------------
+::java::util::Comparator& String::fCASE_INSENSITIVE_ORDER()
+{
+	static jfieldID fieldID = jni::GetStaticFieldID(__CLASS, "CASE_INSENSITIVE_ORDER", "Ljava/util/Comparator;");
+	static ::java::util::Comparator val = ::java::util::Comparator(jni::Op<jobject>::GetStaticField(__CLASS, fieldID));
+	return val;
+}
+*/
 		for (Field field : clazz.getDeclaredFields())
 		{
 			if (!isValid(field))
@@ -519,6 +537,13 @@ public class APIGenerator
 			out.format("}\n");
 		}
 
+/* example ------------------
+jni::Array< ::java::lang::String > String::Split(const ::java::lang::String& arg0, const ::jint& arg1) const
+{
+	static jmethodID methodID = jni::GetMethodID(__CLASS, "split", "(Ljava/lang/String;I)[Ljava/lang/String;");
+	return jni::Array< ::java::lang::String >(jni::Op<jarray>::CallMethod(m_Object, methodID, (jobject)arg0, arg1));
+}
+*/
 		for (Method method : clazz.getDeclaredMethods())
 		{
 			if (!isValid(method))
@@ -544,6 +569,13 @@ public class APIGenerator
 			out.format("}\n");
 		}
 
+/* example ------------------
+jobject String::__Constructor(const jni::Array< ::jbyte >& arg0, const ::jint& arg1, const ::jint& arg2)
+{
+	static jmethodID constructorID = jni::GetMethodID(__CLASS, "<init>", "([BII)V");
+	return jni::NewObject(__CLASS, constructorID, (jobject)arg0, arg1, arg2);
+}
+*/
 		for (Constructor constructor : clazz.getDeclaredConstructors())
 		{
 			if (!isValid(constructor, clazz))
