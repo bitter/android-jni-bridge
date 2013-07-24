@@ -15,6 +15,7 @@ my @classes = (
 	'::android::os::Build',
 	'::android::os::Build_VERSION',
 	'::android::os::Environment',
+	'::android::os::PowerManager',
 	'::android::os::Vibrator',
 	'::android::provider::Settings_Secure',
 	'::android::telephony::TelephonyManager',
