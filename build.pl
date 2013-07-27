@@ -23,6 +23,7 @@ my @classes = (
 	'::android::view::WindowManager',
 	'::android::webkit::MimeTypeMap',
 	'::java::lang::System',
+	'::java::lang::NoSuchMethodError',
 	'::java::lang::ClassCastException',
 	'::java::lang::UnsatisfiedLinkError'
 );
