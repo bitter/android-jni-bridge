@@ -303,6 +303,26 @@ void ReleaseStringUTFChars(jstring str, const char* utfchars)
 	JNI_CALL_NO_RET(str && utfchars, false, env->ReleaseStringUTFChars(str, utfchars));
 }
 
+size_t GetArrayLength(jarray obj)
+{
+	JNI_CALL(size_t, obj, true, env->GetArrayLength(obj));
+}
+
+jobjectArray NewObjectArray(jsize length, jclass elementClass, jobject initialElement)
+{
+	JNI_CALL(jobjectArray, elementClass, true, env->NewObjectArray(length, elementClass, initialElement));
+}
+
+jobject GetObjectArrayElement(jobjectArray obj, size_t index)
+{
+	JNI_CALL(jobject, obj, true, env->GetObjectArrayElement(obj, index));
+}
+
+void SetObjectArrayElement(jobjectArray obj, size_t index, jobject val)
+{
+	JNI_CALL_NO_RET(obj, true, env->SetObjectArrayElement(obj, index, val));
+}
+
 // --------------------------------------------------------------------------------------
 // LocalFrame
 // --------------------------------------------------------------------------------------

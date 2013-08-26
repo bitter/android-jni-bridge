@@ -41,34 +41,38 @@ bool        CheckForExceptionError(JNIEnv* env);
 // http://docs.oracle.com/javase/6/docs/technotes/guides/jni/spec/functions.html#wp9502
 // --------------------------------------------------------------------------------------
 
-JavaVM*     GetJavaVM();
-JNIEnv*     AttachCurrentThread();
-void        DetachCurrentThread();
+JavaVM*      GetJavaVM();
+JNIEnv*      AttachCurrentThread();
+void         DetachCurrentThread();
 
-jclass      FindClass(const char* name);
+jclass       FindClass(const char* name);
 
-jint        Throw(jthrowable object);
-jint        ThrowNew(jclass exception, const char* message);
-void        FatalError(const char* str);
+jint         Throw(jthrowable object);
+jint         ThrowNew(jclass exception, const char* message);
+void         FatalError(const char* str);
 
-jobject     NewGlobalRef(jobject obj);
-void        DeleteGlobalRef(jobject obj);
+jobject      NewGlobalRef(jobject obj);
+void         DeleteGlobalRef(jobject obj);
 
-jclass      GetObjectClass(jobject object);
-jboolean    IsInstanceOf(jobject object, jclass clazz);
+jclass       GetObjectClass(jobject object);
+jboolean     IsInstanceOf(jobject object, jclass clazz);
 
-jmethodID   GetMethodID(jclass clazz, const char* name, const char* signature);
-jfieldID    GetFieldID(jclass clazz, const char* name, const char* signature);
-jmethodID   GetStaticMethodID(jclass clazz, const char* name, const char* signature);
-jfieldID    GetStaticFieldID(jclass clazz, const char* name, const char* signature);
+jmethodID    GetMethodID(jclass clazz, const char* name, const char* signature);
+jfieldID     GetFieldID(jclass clazz, const char* name, const char* signature);
+jmethodID    GetStaticMethodID(jclass clazz, const char* name, const char* signature);
+jfieldID     GetStaticFieldID(jclass clazz, const char* name, const char* signature);
 
-jobject		NewObject(jclass clazz, jmethodID methodID, ...);
+jobject		 NewObject(jclass clazz, jmethodID methodID, ...);
 
-jstring     NewStringUTF(const char* str);
-jsize       GetStringUTFLength(jstring string);
-const char* GetStringUTFChars(jstring str, jboolean* isCopy = 0);
-void        ReleaseStringUTFChars(jstring str, const char* utfchars);
+jstring      NewStringUTF(const char* str);
+jsize        GetStringUTFLength(jstring string);
+const char*  GetStringUTFChars(jstring str, jboolean* isCopy = 0);
+void         ReleaseStringUTFChars(jstring str, const char* utfchars);
 
+size_t       GetArrayLength(jarray obj);
+jobject      GetObjectArrayElement(jobjectArray obj, size_t index);
+void         SetObjectArrayElement(jobjectArray obj, size_t index, jobject val);
+jobjectArray NewObjectArray(jsize length, jclass elementClass, jobject initialElement = 0);
 
 class LocalFrame
 {
@@ -111,8 +115,9 @@ private:
 // JNI Operations
 // Heavily inspired by https://github.com/kohsuke/jnitl
 //----------------------------------------------------------------------------
-template <class JT, class RT,
+template <typename JT, typename RT,
 	RT   (JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
 	RT   (JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
 	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
 	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
@@ -122,13 +127,6 @@ template <class JT, class RT,
 class Basic_Op
 {
 public:
-	static JT CallStaticMethod(jclass clazz, jmethodID id, ...)
-	{
-		va_list args;
-		va_start(args, id);
-		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*CallStaticMethodOP)(clazz, id, args)));
-		va_end(args);
-	}
 	static JT CallMethod(jobject object, jmethodID id, ...)
 	{
 		va_list args;
@@ -136,9 +134,19 @@ public:
 		JNI_CALL(JT, object && id, true, static_cast<JT>((env->*CallMethodOP)(object, id, args)));
 		va_end(args);
 	}
-	static JT GetStaticField(jclass clazz, jfieldID id)
+	static JT CallNonVirtualMethod(jobject object, jclass clazz, jmethodID id, ...)
 	{
-		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*GetStaticFieldOP)(clazz, id)));
+		va_list args;
+		va_start(args, id);
+		JNI_CALL(JT, object && clazz && id, true, static_cast<JT>((env->*CallNonvirtualMethodOP)(object, clazz, id, args)));
+		va_end(args);
+	}
+	static JT CallStaticMethod(jclass clazz, jmethodID id, ...)
+	{
+		va_list args;
+		va_start(args, id);
+		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*CallStaticMethodOP)(clazz, id, args)));
+		va_end(args);
 	}
 	static JT GetField(jobject object, jfieldID id)
 	{
@@ -148,40 +156,95 @@ public:
 	{
 		JNI_CALL_NO_RET(object && id, true, (env->*SetFieldOP)(object, id, value));
 	}
+	static JT GetStaticField(jclass clazz, jfieldID id)
+	{
+		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*GetStaticFieldOP)(clazz, id)));
+	}
 	static void SetStaticField(jclass clazz, jfieldID id, const RT& value)
 	{
 		JNI_CALL_NO_RET(clazz && id, true, (env->*SetStaticFieldOP)(clazz, id, value));
 	}
 };
 
-#define JNITL_DEF_OP_LIST(mt,ft) \
-	&JNIEnv::Call##mt##V, \
-	&JNIEnv::CallStatic##mt##V, \
-	&JNIEnv::Get##ft, \
-	&JNIEnv::Set##ft, \
-	&JNIEnv::GetStatic##ft, \
-	&JNIEnv::SetStatic##ft
+template <typename RT, typename RAT,
+	RT   (JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNIEnv::* CallNonVirualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
+	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT),
+	RAT  (JNIEnv::* NewArrayOP)(jsize),
+	RT*  (JNIEnv::* GetArrayElementsOP)(RAT, jboolean*),
+	void (JNIEnv::* ReleaseArrayElementsOP)(RAT, RT*, jint),
+	void (JNIEnv::* GetArrayRegionOP)(RAT, jsize, jsize, RT*),
+	void (JNIEnv::* SetArrayRegionOP)(RAT, jsize, jsize, const RT*)
+>
+class Primitive_Op : public Basic_Op<RT, RT, CallMethodOP, CallNonVirualMethodOP, CallStaticMethodOP, GetFieldOP, SetFieldOP, GetStaticFieldOP, SetStaticFieldOP>
+{
+public:
+	static RAT NewArray(jsize size)
+	{
+		JNI_CALL(RAT, true, true, static_cast<RAT>((env->*NewArrayOP)(size)));
+	}
+	static RT* GetArrayElements(RAT array, jboolean* isCopy)
+	{
+		JNI_CALL(RT*, array, true, static_cast<RT*>((env->*GetArrayElementsOP)(array, isCopy)));
+	}
+	static void ReleaseArrayElements(RAT array, RT* elements, jint mode = NULL)
+	{
+		JNI_CALL_NO_RET(array && elements, true, (env->*ReleaseArrayElementsOP)(array, elements, mode));
+	}
+	static void GetArrayRegion(RAT array, jsize start, jsize len, RT* buffer)
+	{
+		JNI_CALL_NO_RET(array && buffer, true, (env->*GetArrayRegionOP)(array, start, len, buffer));
+	}
+	static void SetArrayRegion(RAT array, jsize start, jsize len, RT* buffer)
+	{
+		JNI_CALL_NO_RET(array && buffer, true, (env->*SetArrayRegionOP)(array, start, len, buffer));
+	}
+};
 
-#define JNITL_DEF_OP(t,mt,ft) \
+#define JNITL_DEF_OP_LIST(t) \
+	&JNIEnv::Call##t##MethodV, \
+	&JNIEnv::CallNonvirtual##t##MethodV, \
+	&JNIEnv::CallStatic##t##MethodV, \
+	&JNIEnv::Get##t##Field, \
+	&JNIEnv::Set##t##Field, \
+	&JNIEnv::GetStatic##t##Field, \
+	&JNIEnv::SetStatic##t##Field
+
+#define JNITL_DEF_PRIMITIVE_OP_LIST(t) \
+	JNITL_DEF_OP_LIST(t), \
+	&JNIEnv::New##t##Array, \
+	&JNIEnv::Get##t##ArrayElements, \
+	&JNIEnv::Release##t##ArrayElements, \
+	&JNIEnv::Get##t##ArrayRegion, \
+	&JNIEnv::Set##t##ArrayRegion
+
+#define JNITL_DEF_PRIMITIVE_OP(jt,t) \
 	template <> \
-	class Op<t> : public Basic_Op<t,t, \
-		JNITL_DEF_OP_LIST(mt,ft) \
+	class Op<jt> : public Primitive_Op<jt,jt##Array, \
+		JNITL_DEF_PRIMITIVE_OP_LIST(t) \
 	> {};
 
-
-	// it defaults to jobject
+// it defaults to jobject
 template<typename T>
-class Op : public Basic_Op<T, jobject, JNITL_DEF_OP_LIST(ObjectMethod, ObjectField)> {};
+class Op : public Basic_Op<T, jobject, JNITL_DEF_OP_LIST(Object)> {};
 
 // specialization for primitives
-JNITL_DEF_OP(jboolean,BooleanMethod,BooleanField)
-JNITL_DEF_OP(jint,IntMethod,IntField)
-JNITL_DEF_OP(jshort,ShortMethod,ShortField)
-JNITL_DEF_OP(jbyte,ByteMethod,ByteField)
-JNITL_DEF_OP(jlong,LongMethod,LongField)
-JNITL_DEF_OP(jfloat,FloatMethod,FloatField)
-JNITL_DEF_OP(jdouble,DoubleMethod,DoubleField)
-JNITL_DEF_OP(jchar,CharMethod,CharField)
+JNITL_DEF_PRIMITIVE_OP(jboolean,Boolean)
+JNITL_DEF_PRIMITIVE_OP(jint,Int)
+JNITL_DEF_PRIMITIVE_OP(jshort,Short)
+JNITL_DEF_PRIMITIVE_OP(jbyte,Byte)
+JNITL_DEF_PRIMITIVE_OP(jlong,Long)
+JNITL_DEF_PRIMITIVE_OP(jfloat,Float)
+JNITL_DEF_PRIMITIVE_OP(jdouble,Double)
+JNITL_DEF_PRIMITIVE_OP(jchar,Char)
+
+#undef JNITL_DEF_PRIMITIVE_OP
+#undef JNITL_DEF_PRIMITIVE_OP_LIST
+#undef JNITL_DEF_OP_LIST
 
 // void requires a specialization.
 template <>

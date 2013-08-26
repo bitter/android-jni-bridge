@@ -180,7 +180,12 @@ public class APIGenerator
 	private String getPrimitiveType(Class clazz)
 	{
 		if (clazz.isArray())
-			return "jarray";
+		{
+			Class elementClazz = clazz.getComponentType();
+			if (elementClazz.isPrimitive())
+				return "j" + elementClazz.getSimpleName() + "Array";
+			return "jobjectArray";
+		}
 		if (clazz.isPrimitive())
 			return "j" + clazz.getSimpleName();
 		return "jobject";
@@ -541,7 +546,7 @@ public class APIGenerator
 jni::Array< ::java::lang::String > String::Split(const ::java::lang::String& arg0, const ::jint& arg1) const
 {
 	static jmethodID methodID = jni::GetMethodID(__CLASS, "split", "(Ljava/lang/String;I)[Ljava/lang/String;");
-	return jni::Array< ::java::lang::String >(jni::Op<jarray>::CallMethod(m_Object, methodID, (jobject)arg0, arg1));
+	return jni::Array< ::java::lang::String >(jni::Op<jobjectArray>::CallMethod(m_Object, methodID, (jobject)arg0, arg1));
 }
 */
 		for (Method method : clazz.getDeclaredMethods())

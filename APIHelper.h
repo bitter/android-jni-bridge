@@ -96,7 +96,6 @@ class Object
 {
 public:
 	explicit inline Object(jobject obj) : m_Object(obj) {}
-	inline Object(const Object& obj) : m_Object(obj.m_Object) {}
 
 	inline operator bool() const	{ return m_Object != 0; }
 	inline operator jobject() const	{ return m_Object; }
@@ -107,18 +106,90 @@ protected:
 
 
 template <typename T>
-class Array
+class ArrayBase
 {
 public:
-	explicit inline Array(jarray obj) : m_Array(obj) {}
-	inline Array(const Array& obj) : m_Array(obj.m_Array) {}
+	explicit ArrayBase(T obj) : m_Array(obj) {}
 
-	inline operator jobject() const { return m_Array; }
-	inline operator jarray() const { return m_Array; }
+	inline size_t Length() const { return m_Array != 0 ? jni::GetArrayLength(m_Array) : 0; }
+
+	inline operator bool() const { return m_Array != 0; }
+	inline operator T() const { return m_Array; }
 
 protected:
-	GlobalRef<jarray> m_Array;
+	GlobalRef<T> m_Array;
 };
+
+template <typename T, typename AT>
+class PrimitiveArrayBase : public ArrayBase<AT>
+{
+public:
+	explicit PrimitiveArrayBase(AT        obj) : ArrayBase<AT>(obj) {};
+	explicit PrimitiveArrayBase(size_t length) : ArrayBase<AT>(jni::Op<T>::NewArray(length)) {};
+
+	inline T operator[] (const int i)
+	{
+		T value = 0;
+		if (*this)
+			jni::Op<T>::GetArrayRegion(*this, i, 1, &value);
+		return value;
+	}
+
+	inline T* Lock()
+	{
+		return *this ? jni::Op<T>::GetArrayElements(*this) : 0;
+	}
+	inline void Release(T* elements)
+	{
+		if (*this)
+			jni::Op<T>::ReleaseArrayElements(*this, elements, 0);
+	}
+};
+
+
+template <typename T>
+class Array : public ArrayBase<jobjectArray>
+{
+public:
+	explicit inline Array(jobjectArray obj) : ArrayBase<jobjectArray>(obj) {};
+	explicit inline Array(size_t length, T initialElement = 0) : ArrayBase<jobjectArray>(jni::NewObjectArray(length, T::__CLASS, initialElement)) {};
+
+	inline T operator[] (const int i) { return T(*this ? jni::GetObjectArrayElement(*this, i) : 0); }
+
+	inline T* Lock()
+	{
+		T* elements = malloc(Length() * sizeof(T));
+		for (int i = 0; i < Length(); ++i)
+			elements[i] = T(jni::GetObjectArrayElement(*this, i));
+		return elements;
+	}
+	inline void Release(T* elements)
+	{
+		for (int i = 0; i < Length(); ++i)
+			jni::SetObjectArrayElement(*this, i, elements[i]);
+		free(elements);
+	}
+};
+
+#define DEF_PRIMITIVE_ARRAY_TYPE(t) \
+template <> \
+class Array<t> : public PrimitiveArrayBase<t, t##Array> \
+{ \
+public: \
+	explicit inline Array(t##Array obj) : PrimitiveArrayBase<t, t##Array>(obj) {}; \
+	explicit inline Array(size_t length) : PrimitiveArrayBase<t, t##Array>(jni::Op<t>::NewArray(length)) {}; \
+};
+
+DEF_PRIMITIVE_ARRAY_TYPE(jboolean)
+DEF_PRIMITIVE_ARRAY_TYPE(jint)
+DEF_PRIMITIVE_ARRAY_TYPE(jshort)
+DEF_PRIMITIVE_ARRAY_TYPE(jbyte)
+DEF_PRIMITIVE_ARRAY_TYPE(jlong)
+DEF_PRIMITIVE_ARRAY_TYPE(jfloat)
+DEF_PRIMITIVE_ARRAY_TYPE(jdouble)
+DEF_PRIMITIVE_ARRAY_TYPE(jchar)
+
+#undef DEF_PRIMITIVE_ARRAY_TYPE
 
 template <typename T>
 inline T Cast(const jni::Object& o)
