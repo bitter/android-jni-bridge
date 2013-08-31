@@ -31,7 +31,7 @@ String& String::operator = (const String& other)
 
 String::operator const char* ()
 {
-	if (!m_Str)
+	if (m_Object && !m_Str)
 		m_Str = jni::GetStringUTFChars(*this);
 	return m_Str;
 }
