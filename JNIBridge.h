@@ -187,7 +187,7 @@ public:
 	{
 		JNI_CALL(RAT, true, true, static_cast<RAT>((env->*NewArrayOP)(size)));
 	}
-	static RT* GetArrayElements(RAT array, jboolean* isCopy)
+	static RT* GetArrayElements(RAT array, jboolean* isCopy = NULL)
 	{
 		JNI_CALL(RT*, array, true, static_cast<RT*>((env->*GetArrayElementsOP)(array, isCopy)));
 	}
