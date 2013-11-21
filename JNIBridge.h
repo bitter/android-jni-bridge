@@ -42,6 +42,7 @@ bool        CheckForExceptionError(JNIEnv* env);
 // --------------------------------------------------------------------------------------
 
 JavaVM*      GetJavaVM();
+JNIEnv*      GetEnv();
 JNIEnv*      AttachCurrentThread();
 void         DetachCurrentThread();
 
@@ -73,6 +74,16 @@ size_t       GetArrayLength(jarray obj);
 jobject      GetObjectArrayElement(jobjectArray obj, size_t index);
 void         SetObjectArrayElement(jobjectArray obj, size_t index, jobject val);
 jobjectArray NewObjectArray(jsize length, jclass elementClass, jobject initialElement = 0);
+
+class ThreadScope
+{
+public:
+	ThreadScope();
+	~ThreadScope();
+
+private:
+	bool m_NeedDetach;
+};
 
 class LocalFrame
 {

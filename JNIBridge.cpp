@@ -180,14 +180,25 @@ JavaVM* GetJavaVM()
 	return g_JavaVM;
 }
 
-JNIEnv* AttachCurrentThread()
+JNIEnv* GetEnv()
 {
 	JavaVM* vm = g_JavaVM;
 	if (!vm)
 		return 0;
 
 	JNIEnv* env(0);
-	if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) == JNI_EDETACHED)
+	vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6);
+	return env;
+}
+
+JNIEnv* AttachCurrentThread()
+{
+	JavaVM* vm = g_JavaVM;
+	if (!vm)
+		return 0;
+
+	JNIEnv* env = GetEnv();
+	if (!env)
 	{
 		JavaVMAttachArgs args;
 		args.version = JNI_VERSION_1_6;
@@ -321,6 +332,20 @@ jobject GetObjectArrayElement(jobjectArray obj, size_t index)
 void SetObjectArrayElement(jobjectArray obj, size_t index, jobject val)
 {
 	JNI_CALL_NO_RET(obj, true, env->SetObjectArrayElement(obj, index, val));
+}
+
+// --------------------------------------------------------------------------------------
+// ThreadScope
+// --------------------------------------------------------------------------------------
+ThreadScope::ThreadScope()
+{
+	m_NeedDetach = !jni::GetEnv();
+}
+
+ThreadScope::~ThreadScope()
+{
+	if (m_NeedDetach)
+		jni::DetachCurrentThread();
 }
 
 // --------------------------------------------------------------------------------------

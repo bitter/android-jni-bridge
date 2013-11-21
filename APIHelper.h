@@ -192,9 +192,9 @@ DEF_PRIMITIVE_ARRAY_TYPE(jchar)
 #undef DEF_PRIMITIVE_ARRAY_TYPE
 
 template <typename T>
-inline T Cast(const jni::Object& o)
+inline T Cast(jobject o)
 {
-	return T(jni::IsInstanceOf(o, T::__CLASS) ? (jobject) o : 0);
+	return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0);
 }
 
 template <typename T>
