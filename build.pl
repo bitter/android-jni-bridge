@@ -12,6 +12,7 @@ my @classes = (
 	'::android::app::Activity',
 	'::android::content::Context',
 	'::android::hardware::display::DisplayManager',
+	'::android::media::AudioManager',
 	'::android::os::Build',
 	'::android::os::Build_VERSION',
 	'::android::os::Environment',
