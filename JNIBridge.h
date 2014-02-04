@@ -126,12 +126,12 @@ private:
 // JNI Operations
 // Heavily inspired by https://github.com/kohsuke/jnitl
 //----------------------------------------------------------------------------
-#define	JNI_FUNCTION_ATTRIBUTES __NDK_FPABI__
+#define	JNITL_FUNCTION_ATTRIBUTES __NDK_FPABI__
 
 template <typename JT, typename RT,
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list)
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list)
 >
 class MethodOps
 {
@@ -187,10 +187,10 @@ public:
 };
 
 template <typename JT, typename RT,
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetFieldOP)(jobject, jfieldID),
-	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
-	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT)
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT)
 >
 class FloatFieldOps
 {
@@ -231,7 +231,7 @@ public:
 	{
 		JNI_CALL(RT*, array, true, static_cast<RT*>((env->*GetArrayElementsOP)(array, isCopy)));
 	}
-	static void ReleaseArrayElements(RAT array, RT* elements, jint mode = NULL)
+	static void ReleaseArrayElements(RAT array, RT* elements, jint mode = 0)
 	{
 		JNI_CALL_NO_RET(array && elements, true, (env->*ReleaseArrayElementsOP)(array, elements, mode));
 	}
@@ -246,9 +246,9 @@ public:
 };
 
 template <typename JT, typename RT,
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
 	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
 	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
 	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
@@ -260,9 +260,9 @@ class Object_Op :
 	{ };
 
 template <typename RT, typename RAT,
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
 	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
 	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
 	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
@@ -280,13 +280,13 @@ class Primitive_Op :
 	{ };
 
 template <typename RT, typename RAT,
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetFieldOP)(jobject, jfieldID),
-	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
-	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
-	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT),
 	RAT  (JNIEnv::* NewArrayOP)(jsize),
 	RT*  (JNIEnv::* GetArrayElementsOP)(RAT, jboolean*),
 	void (JNIEnv::* ReleaseArrayElementsOP)(RAT, RT*, jint),
@@ -343,6 +343,7 @@ JNITL_DEF_PRIMITIVE_OP(jchar,Char)
 JNITL_DEF_FLOAT_PRIMITIVE_OP(jfloat,Float)
 JNITL_DEF_FLOAT_PRIMITIVE_OP(jdouble,Double)
 
+#undef JNITL_FUNCTION_ATTRIBUTES
 #undef JNITL_DEF_FLOAT_PRIMITIVE_OP
 #undef JNITL_DEF_PRIMITIVE_OP
 #undef JNITL_DEF_PRIMITIVE_OP_LIST
