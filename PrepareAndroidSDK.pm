@@ -127,6 +127,18 @@ our $ndks =
 						"macosx" => "android-ndk-r8e-darwin-x86.tar.bz2",
 						"linux" => "android-ndk-r8e-linux-x86.tar.bz2",
 					},
+	"r9b"		=>
+					{
+						"windows" => "android-ndk-r9b-windows.zip",
+						"macosx" => "android-ndk-r9b-darwin-x86.tar.bz2",
+						"linux" => "android-ndk-r9b-linux-x86.tar.bz2",
+					},
+	"r9c"		=>
+					{
+						"windows" => "android-ndk-r9c-windows.zip",
+						"macosx" => "android-ndk-r9c-darwin-x86.tar.bz2",
+						"linux" => "android-ndk-r9c-linux-x86.tar.bz2",
+					},
 };
 
 our ($HOST_ENV, $TMP, $HOME, $WINZIP);
