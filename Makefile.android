@@ -17,13 +17,14 @@ ifeq (${ABI}, x86)
         NDK_ARCH           := arch-x86
         GCC_BIN_PREFIX     := i686-linux-android-
         GCC_TOOLCHAIN      := x86-${GCC_VERSION}
-        CPPFLAGS           := ${CPPFLAGS} -target armv5te-none-linux-androideabi
+        CPPFLAGS           := ${CPPFLAGS}
 else
         NDK_ARCH           := arch-arm
         GCC_BIN_PREFIX     := arm-linux-androideabi-
         GCC_TOOLCHAIN      := arm-linux-androideabi-${GCC_VERSION}
         CPPFLAGS           := ${CPPFLAGS} -marm
         DEFINES            := ${DEFINES} -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__
+        LLVM_FLAGS          = -gcc-toolchain ${GCC_TOOLCHAIN_PATH}
 
         ifeq (${ABI}, armeabi)
                 CPPFLAGS   := ${CPPFLAGS} -target armv5te-none-linux-androideabi -march=armv5te -mtune=xscale -mfloat-abi=soft
@@ -37,16 +38,18 @@ endif
 
 DEFINES               := ${DEFINES} -DANDROID
 override PLATFORM      = android/${ABI}
-LLVM_TOOL_PREFIX       = ${NDK}/toolchains/${LLVM_TOOLCHAIN}/prebuilt/${HOST}/bin/
-GCC_TOOL_PREFIX        = ${NDK}/toolchains/${GCC_TOOLCHAIN}/prebuilt/${HOST}/bin/${GCC_BIN_PREFIX}
+LLVM_TOOLCAHIN_PATH    = ${NDK}/toolchains/${LLVM_TOOLCHAIN}/prebuilt/${HOST}
+GCC_TOOLCHAIN_PATH     = ${NDK}/toolchains/${GCC_TOOLCHAIN}/prebuilt/${HOST}
+LLVM_TOOL_PREFIX       = ${LLVM_TOOLCAHIN_PATH}/bin/
+GCC_TOOL_PREFIX        = ${GCC_TOOLCHAIN_PATH}/bin/${GCC_BIN_PREFIX}
 SYSROOT                = ${NDK}/platforms/${API}/${NDK_ARCH}
 CPPFLAGS              := ${CPPFLAGS} --sysroot=${SYSROOT} -fpic -ffunction-sections -fdata-sections -fstrict-aliasing -fvisibility=hidden -MMD
 CXXFLAGS              := ${CXXFLAGS} -fno-rtti -fno-exceptions
 LDFLAGS               := ${LDFLAGS} --sysroot=${SYSROOT} -Wl,--no-undefined -Wl,--gc-sections
-CXX                    = ${LLVM_TOOL_PREFIX}clang++ ${DEFINES} -gcc-toolchain $(GCC_TOOLCHAIN)
-CC                     = ${LLVM_TOOL_PREFIX}clang ${DEFINES} -gcc-toolchain $(GCC_TOOLCHAIN)
+CXX                    = ${LLVM_TOOL_PREFIX}clang++ ${DEFINES} ${LLVM_FLAGS}
+CC                     = ${LLVM_TOOL_PREFIX}clang ${DEFINES} ${LLVM_FLAGS}
 STRIP                  = ${LLVM_TOOL_PREFIX}strip ${STRIPFLAGS}
-LD                     = ${LLVM_TOOL_PREFIX}clang++ ${LDFLAGS} -gcc-toolchain $(GCC_TOOLCHAIN)
+LD                     = ${LLVM_TOOL_PREFIX}clang++ ${LDFLAGS} ${LLVM_FLAGS}
 AR                     = ${GCC_TOOL_PREFIX}ar crs
 
 export CPPFLAGS CXXFLAGS LDFLAGS CXX CC STRIP LD AR DEFINES PLATFORM
