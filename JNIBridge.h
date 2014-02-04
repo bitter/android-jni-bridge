@@ -126,16 +126,14 @@ private:
 // JNI Operations
 // Heavily inspired by https://github.com/kohsuke/jnitl
 //----------------------------------------------------------------------------
+#define	JNI_FUNCTION_ATTRIBUTES __NDK_FPABI__
+
 template <typename JT, typename RT,
-	RT   (JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
-	RT   (JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
-	RT   (JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
-	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
-	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
-	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
-	void (JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT)
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list)
 >
-class Basic_Op
+class MethodOps
 {
 public:
 	static JT CallMethod(jobject object, jmethodID id, ...)
@@ -159,6 +157,44 @@ public:
 		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*CallStaticMethodOP)(clazz, id, args)));
 		va_end(args);
 	}
+};
+
+template <typename JT, typename RT,
+	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT)
+>
+class FieldOps
+{
+public:
+	static JT GetField(jobject object, jfieldID id)
+	{
+		JNI_CALL(JT, object && id, true, static_cast<JT>((env->*GetFieldOP)(object, id)));
+	}
+	static void SetField(jobject object, jfieldID id, const RT& value)
+	{
+		JNI_CALL_NO_RET(object && id, true, (env->*SetFieldOP)(object, id, value));
+	}
+	static JT GetStaticField(jclass clazz, jfieldID id)
+	{
+		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*GetStaticFieldOP)(clazz, id)));
+	}
+	static void SetStaticField(jclass clazz, jfieldID id, const RT& value)
+	{
+		JNI_CALL_NO_RET(clazz && id, true, (env->*SetStaticFieldOP)(clazz, id, value));
+	}
+};
+
+template <typename JT, typename RT,
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT)
+>
+class FloatFieldOps
+{
+public:
 	static JT GetField(jobject object, jfieldID id)
 	{
 		JNI_CALL(JT, object && id, true, static_cast<JT>((env->*GetFieldOP)(object, id)));
@@ -178,20 +214,13 @@ public:
 };
 
 template <typename RT, typename RAT,
-	RT   (JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
-	RT   (JNIEnv::* CallNonVirualMethodOP)(jobject, jclass, jmethodID, va_list),
-	RT   (JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
-	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
-	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
-	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
-	void (JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT),
 	RAT  (JNIEnv::* NewArrayOP)(jsize),
 	RT*  (JNIEnv::* GetArrayElementsOP)(RAT, jboolean*),
 	void (JNIEnv::* ReleaseArrayElementsOP)(RAT, RT*, jint),
 	void (JNIEnv::* GetArrayRegionOP)(RAT, jsize, jsize, RT*),
 	void (JNIEnv::* SetArrayRegionOP)(RAT, jsize, jsize, const RT*)
 >
-class Primitive_Op : public Basic_Op<RT, RT, CallMethodOP, CallNonVirualMethodOP, CallStaticMethodOP, GetFieldOP, SetFieldOP, GetStaticFieldOP, SetStaticFieldOP>
+class ArrayOps
 {
 public:
 	static RAT NewArray(jsize size)
@@ -216,6 +245,61 @@ public:
 	}
 };
 
+template <typename JT, typename RT,
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
+	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT)
+>
+class Object_Op :
+	public MethodOps<JT, RT, CallMethodOP, CallNonvirtualMethodOP, CallStaticMethodOP>,
+	public FieldOps<JT, RT, GetFieldOP, SetFieldOP, GetStaticFieldOP, SetStaticFieldOP>
+	{ };
+
+template <typename RT, typename RAT,
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
+	RT   (JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT),
+	RAT  (JNIEnv::* NewArrayOP)(jsize),
+	RT*  (JNIEnv::* GetArrayElementsOP)(RAT, jboolean*),
+	void (JNIEnv::* ReleaseArrayElementsOP)(RAT, RT*, jint),
+	void (JNIEnv::* GetArrayRegionOP)(RAT, jsize, jsize, RT*),
+	void (JNIEnv::* SetArrayRegionOP)(RAT, jsize, jsize, const RT*)
+>
+class Primitive_Op :
+	public MethodOps<RT, RT, CallMethodOP, CallNonvirtualMethodOP, CallStaticMethodOP>,
+	public FieldOps<RT, RT, GetFieldOP, SetFieldOP, GetStaticFieldOP, SetStaticFieldOP>,
+	public ArrayOps<RT, RAT, NewArrayOP, GetArrayElementsOP, ReleaseArrayElementsOP, GetArrayRegionOP, SetArrayRegionOP>
+	{ };
+
+template <typename RT, typename RAT,
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallNonvirtualMethodOP)(jobject, jclass, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* CallStaticMethodOP)(jclass, jmethodID, va_list),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetFieldOP)(jobject, jfieldID),
+	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetFieldOP)(jobject, jfieldID, RT),
+	RT   (JNI_FUNCTION_ATTRIBUTES JNIEnv::* GetStaticFieldOP)(jclass, jfieldID),
+	void (JNI_FUNCTION_ATTRIBUTES JNIEnv::* SetStaticFieldOP)(jclass, jfieldID, RT),
+	RAT  (JNIEnv::* NewArrayOP)(jsize),
+	RT*  (JNIEnv::* GetArrayElementsOP)(RAT, jboolean*),
+	void (JNIEnv::* ReleaseArrayElementsOP)(RAT, RT*, jint),
+	void (JNIEnv::* GetArrayRegionOP)(RAT, jsize, jsize, RT*),
+	void (JNIEnv::* SetArrayRegionOP)(RAT, jsize, jsize, const RT*)
+>
+class FloatPrimitive_Op :
+	public MethodOps<RT, RT, CallMethodOP, CallNonvirtualMethodOP, CallStaticMethodOP>,
+	public FloatFieldOps<RT, RT, GetFieldOP, SetFieldOP, GetStaticFieldOP, SetStaticFieldOP>,
+	public ArrayOps<RT, RAT, NewArrayOP, GetArrayElementsOP, ReleaseArrayElementsOP, GetArrayRegionOP, SetArrayRegionOP>
+	{ };
+
+
 #define JNITL_DEF_OP_LIST(t) \
 	&JNIEnv::Call##t##MethodV, \
 	&JNIEnv::CallNonvirtual##t##MethodV, \
@@ -239,9 +323,15 @@ public:
 		JNITL_DEF_PRIMITIVE_OP_LIST(t) \
 	> {};
 
+#define JNITL_DEF_FLOAT_PRIMITIVE_OP(jt,t) \
+	template <> \
+	class Op<jt> : public FloatPrimitive_Op<jt,jt##Array, \
+		JNITL_DEF_PRIMITIVE_OP_LIST(t) \
+	> {};
+
 // it defaults to jobject
 template<typename T>
-class Op : public Basic_Op<T, jobject, JNITL_DEF_OP_LIST(Object)> {};
+class Op : public Object_Op<T, jobject, JNITL_DEF_OP_LIST(Object)> {};
 
 // specialization for primitives
 JNITL_DEF_PRIMITIVE_OP(jboolean,Boolean)
@@ -249,10 +339,11 @@ JNITL_DEF_PRIMITIVE_OP(jint,Int)
 JNITL_DEF_PRIMITIVE_OP(jshort,Short)
 JNITL_DEF_PRIMITIVE_OP(jbyte,Byte)
 JNITL_DEF_PRIMITIVE_OP(jlong,Long)
-JNITL_DEF_PRIMITIVE_OP(jfloat,Float)
-JNITL_DEF_PRIMITIVE_OP(jdouble,Double)
 JNITL_DEF_PRIMITIVE_OP(jchar,Char)
+JNITL_DEF_FLOAT_PRIMITIVE_OP(jfloat,Float)
+JNITL_DEF_FLOAT_PRIMITIVE_OP(jdouble,Double)
 
+#undef JNITL_DEF_FLOAT_PRIMITIVE_OP
 #undef JNITL_DEF_PRIMITIVE_OP
 #undef JNITL_DEF_PRIMITIVE_OP_LIST
 #undef JNITL_DEF_OP_LIST
