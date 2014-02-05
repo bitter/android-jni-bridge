@@ -288,7 +288,8 @@ public class APIGenerator
 	private boolean isStatic(Member member)			{ return (Modifier.STATIC & member.getModifiers()) != 0; }
 	private boolean isStaticFinal(Member member)	{ return isStatic(member) && (Modifier.FINAL & member.getModifiers()) != 0; }
 	private boolean isPublic(Member member)			{ return (Modifier.PUBLIC & member.getModifiers()) != 0; }
-	private boolean isValid(Member member)			{ return isPublic(member) && !member.isSynthetic(); }
+	private boolean isProtected(Member member)		{ return (Modifier.PROTECTED & member.getModifiers()) != 0; }
+	private boolean isValid(Member member)			{ return (isPublic(member) || isProtected(member)) && !member.isSynthetic(); }
 	private boolean isValid(Method method)			{ return isValid((Member) method) && !method.isBridge(); }
 	private boolean isValid(Constructor ctor, Class clazz)
 	{
