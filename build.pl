@@ -10,6 +10,7 @@ my $api = "android-17";
 my @classes = (
 	'::android::Manifest_permission',
 	'::android::app::Activity',
+	'::android::app::AlertDialog_Builder',
 	'::android::content::Context',
 	'::android::hardware::display::DisplayManager',
 	'::android::media::AudioManager',
