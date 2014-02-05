@@ -126,7 +126,11 @@ private:
 // JNI Operations
 // Heavily inspired by https://github.com/kohsuke/jnitl
 //----------------------------------------------------------------------------
-#define	JNITL_FUNCTION_ATTRIBUTES __NDK_FPABI__
+#if defined(__NDK_FPABI__)
+#	define	JNITL_FUNCTION_ATTRIBUTES __NDK_FPABI__
+#else
+#	define	JNITL_FUNCTION_ATTRIBUTES
+#endif
 
 template <typename JT, typename RT,
 	RT   (JNITL_FUNCTION_ATTRIBUTES JNIEnv::* CallMethodOP)(jobject, jmethodID, va_list),
