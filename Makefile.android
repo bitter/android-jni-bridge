@@ -17,7 +17,7 @@ ifeq (${ABI}, x86)
         NDK_ARCH           := arch-x86
         GCC_BIN_PREFIX     := i686-linux-android-
         GCC_TOOLCHAIN      := x86-${GCC_VERSION}
-        CPPFLAGS           := ${CPPFLAGS}
+        CPPFLAGS           := ${CPPFLAGS} -target i686-none-linux-android
 else
         NDK_ARCH           := arch-arm
         GCC_BIN_PREFIX     := arm-linux-androideabi-
