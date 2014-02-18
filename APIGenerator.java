@@ -286,7 +286,8 @@ public class APIGenerator
 	private boolean isInner(Class clazz)			{ return clazz.getEnclosingClass() != null; }
 	private boolean isAnonymous(Class clazz)		{ return isInner(clazz) && clazz.getDeclaringClass() == null; }
 	private boolean isStatic(Member member)			{ return (Modifier.STATIC & member.getModifiers()) != 0; }
-	private boolean isStaticFinal(Member member)	{ return isStatic(member) && (Modifier.FINAL & member.getModifiers()) != 0; }
+	private boolean isFinal(Member member)			{ return (Modifier.FINAL & member.getModifiers()) != 0; }
+	private boolean isStaticFinal(Member member)	{ return isStatic(member) && isFinal(member); }
 	private boolean isPublic(Member member)			{ return (Modifier.PUBLIC & member.getModifiers()) != 0; }
 	private boolean isProtected(Member member)		{ return (Modifier.PROTECTED & member.getModifiers()) != 0; }
 	private boolean isValid(Member member)			{ return (isPublic(member) || isProtected(member)) && !member.isSynthetic(); }
@@ -438,6 +439,14 @@ public class APIGenerator
 				isStaticFinal(field) ? "&" : "",
 				getFieldName(field),
 				isStatic(field) ? "" : " const");
+
+			if (isFinal(field))
+				continue;
+			out.format("\t%svoid %s(%s)%s;\n",
+				isStatic(field) ? "static " : "",
+				getFieldName(field),
+				getParameterSignature(new Class[] {field.getType()}),
+				isStatic(field) ? "" : " const");
 		}
 /* example ------------------
 	jni::Array< ::java::lang::String > Split(const ::java::lang::String& arg0, const ::jint& arg1) const;
@@ -541,6 +550,26 @@ public class APIGenerator
 				isStatic(field) ? "__CLASS" : "m_Object");
 			out.format("\treturn val;\n");
 			out.format("}\n");
+
+			if (isFinal(field))
+				continue;
+			out.format("void %s::%s(%s)%s\n",
+				getSimpleName(clazz),
+				getFieldName(field),
+				getParameterSignature(new Class[] {field.getType()}),
+				isStatic(field) ? "" : " const");
+			out.format("{\n");
+			out.format("\tstatic jfieldID fieldID = jni::Get%sFieldID(__CLASS, \"%s\", \"%s\");\n",
+				isStatic(field) ? "Static" : "",
+				field.getName(),
+				getFieldSignature(field));
+			out.format("\tjni::Op<%s>::Set%sField(%s, fieldID%s);\n",
+				getPrimitiveType(field.getType()),
+				isStatic(field) ? "Static" : "",
+				isStatic(field) ? "__CLASS" : "m_Object",
+				getParameterJNINames(new Class[] {field.getType()}));
+			out.format("}\n");
+
 		}
 
 /* example ------------------
