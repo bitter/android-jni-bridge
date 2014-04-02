@@ -31,7 +31,7 @@ else
         else
                 override ABI = armeabi-v7a
                 DEFINES    := ${DEFINES} -DARCH_ARMEABIV7A
-                CPPFLAGS   := ${CPPFLAGS} -target armv5te-none-linux-androideabi-v7a -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+                CPPFLAGS   := ${CPPFLAGS} -target armv5te-none-linux-androideabi-v7a -march=armv7-a -mfpu=vfp -mfloat-abi=softfp
                 LDFLAGS    := -Wl,--fix-cortex-a8
         endif
 endif
