@@ -8,7 +8,7 @@ NDK		= ${ANDROID_NDK_ROOT}
 UNAME  := $(shell uname)
 HOST   := $(shell echo ${UNAME} | tr '[:upper:]' '[:lower:]')-x86
 
-LLVM_VERSION	= 3.3
+LLVM_VERSION	= 3.5
 LLVM_TOOLCHAIN := llvm-${LLVM_VERSION}
 
 GCC_VERSION     = 4.8

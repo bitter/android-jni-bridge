@@ -40,7 +40,7 @@ sub BuildAndroid
 	my $class_names = join(' ', @classes);
 	my $threads = 8;
 
-    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "r9c");
+    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "r10c");
 
     system("make clean") && die("Clean failed");
     system("make -j$threads PLATFORM=android ABI=armeabi-v7a APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv7 library");

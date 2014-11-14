@@ -139,6 +139,12 @@ our $ndks =
 						"macosx" => "android-ndk-r9c-darwin-x86.tar.bz2",
 						"linux" => "android-ndk-r9c-linux-x86.tar.bz2",
 					},
+	"r10c"		=>
+					{
+						"windows" => "android-ndk-r10c-windows-x86.exe",
+						"macosx" => "android-ndk-r10c-darwin-x86.bin",
+						"linux" => "android-ndk-r10c-linux-x86.bin",
+					},
 };
 
 our ($HOST_ENV, $TMP, $HOME, $WINZIP);
@@ -390,6 +396,14 @@ sub DownloadAndUnpackArchive
 		elsif (lc $suffix eq '.bz2')
 		{
 			system("tar", "-xf", $temporary_download_path, "-C", $temporary_unpack_path);
+		}
+		elsif (lc $suffix eq '.exe' or lc $suffix eq '.bin')
+		{
+			if (lc $suffix eq '.bin')
+			{
+				system('chmod', "+x", $temporary_download_path);
+			}
+			system($temporary_download_path, "-o" . $temporary_unpack_path);
 		}
 		else
 		{
