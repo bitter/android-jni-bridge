@@ -30,12 +30,12 @@ static JavaVM*     g_JavaVM;
 // --------------------------------------------------------------------------------------
 static jint PushLocalFrame(jint capacity)
 {
-	JNI_CALL(jint, true, true, env->PushLocalFrame(capacity));
+	JNI_CALL_RETURN(jint, true, true, env->PushLocalFrame(capacity));
 }
 
 static jobject PopLocalFrame(jobject result)
 {
-	JNI_CALL(jobject, true, false, env->PopLocalFrame(result));
+	JNI_CALL_RETURN(jobject, true, false, env->PopLocalFrame(result));
 }
 
 // --------------------------------------------------------------------------------------
@@ -228,110 +228,111 @@ void DetachCurrentThread()
 
 jclass FindClass(const char* name)
 {
-	JNI_CALL(jclass, name, true, env->FindClass(name));
+	JNI_CALL_RETURN(jclass, name, true, env->FindClass(name));
 }
 
 jint Throw(jthrowable object)
 {
-	JNI_CALL(jint, object, true, env->Throw(object));
+	JNI_CALL_RETURN(jint, object, true, env->Throw(object));
 }
 
 jint ThrowNew(jclass clazz, const char* message)
 {
-	JNI_CALL(jint, clazz && message, true, env->ThrowNew(clazz, message));
+	JNI_CALL_RETURN(jint, clazz && message, true, env->ThrowNew(clazz, message));
 }
 
 void FatalError(const char* str)
 {
-	JNI_CALL_NO_RET(str, false, env->FatalError(str));
+	JNI_CALL(str, false, env->FatalError(str));
 }
 
 jobject NewGlobalRef(jobject object)
 {
-	JNI_CALL(jobject, object, true, env->NewGlobalRef(object));
+	JNI_CALL_RETURN(jobject, object, true, env->NewGlobalRef(object));
 }
 
 void DeleteGlobalRef(jobject object)
 {
-	JNI_CALL_NO_RET(object, false, env->DeleteGlobalRef(object));
+	JNI_CALL(object, false, env->DeleteGlobalRef(object));
 }
 
 jclass GetObjectClass(jobject object)
 {
-	JNI_CALL(jclass, object, true, env->GetObjectClass(object));
+	JNI_CALL_RETURN(jclass, object, true, env->GetObjectClass(object));
 }
 
 jboolean IsInstanceOf(jobject object, jclass clazz)
 {
-	JNI_CALL(jboolean, object && clazz, true, env->IsInstanceOf(object, clazz));
+	JNI_CALL_RETURN(jboolean, object && clazz, true, env->IsInstanceOf(object, clazz));
 }
 
 jmethodID GetMethodID(jclass clazz, const char* name, const char* signature)
 {
-	JNI_CALL(jmethodID, clazz && name && signature, true, env->GetMethodID(clazz, name, signature));
+	JNI_CALL_RETURN(jmethodID, clazz && name && signature, true, env->GetMethodID(clazz, name, signature));
 }
 
 jfieldID GetFieldID(jclass clazz, const char* name, const char* signature)
 {
-	JNI_CALL(jfieldID, clazz && name && signature, true, env->GetFieldID(clazz, name, signature));
+	JNI_CALL_RETURN(jfieldID, clazz && name && signature, true, env->GetFieldID(clazz, name, signature));
 }
 
 jmethodID GetStaticMethodID(jclass clazz, const char* name, const char* signature)
 {
-	JNI_CALL(jmethodID, clazz && name && signature, true, env->GetStaticMethodID(clazz, name, signature));
+	JNI_CALL_RETURN(jmethodID, clazz && name && signature, true, env->GetStaticMethodID(clazz, name, signature));
 }
 
 jfieldID GetStaticFieldID(jclass clazz, const char* name, const char* signature)
 {
-	JNI_CALL(jfieldID, clazz && name && signature, true, env->GetStaticFieldID(clazz, name, signature));
+	JNI_CALL_RETURN(jfieldID, clazz && name && signature, true, env->GetStaticFieldID(clazz, name, signature));
 }
 
 jobject NewObject(jclass clazz, jmethodID methodID, ...)
 {
 	va_list args;
 	va_start(args, methodID);
-	JNI_CALL(jobject, clazz && methodID, true, env->NewObjectV(clazz, methodID, args));
+	JNI_CALL_DECLARE(jobject, result, clazz && methodID, true, env->NewObjectV(clazz, methodID, args));
 	va_end(args);
+	return result;
 }
 
 jstring NewStringUTF(const char* str)
 {
-	JNI_CALL(jstring, str, true, env->NewStringUTF(str));
+	JNI_CALL_RETURN(jstring, str, true, env->NewStringUTF(str));
 }
 
 jsize GetStringUTFLength(jstring string)
 {
-	JNI_CALL(jsize, string, true, env->GetStringUTFLength(string));
+	JNI_CALL_RETURN(jsize, string, true, env->GetStringUTFLength(string));
 }
 
 const char* GetStringUTFChars(jstring str, jboolean* isCopy)
 {
-	JNI_CALL(const char*, str, true, env->GetStringUTFChars(str, isCopy));
+	JNI_CALL_RETURN(const char*, str, true, env->GetStringUTFChars(str, isCopy));
 }
 
 void ReleaseStringUTFChars(jstring str, const char* utfchars)
 {
-	JNI_CALL_NO_RET(str && utfchars, false, env->ReleaseStringUTFChars(str, utfchars));
+	JNI_CALL(str && utfchars, false, env->ReleaseStringUTFChars(str, utfchars));
 }
 
 size_t GetArrayLength(jarray obj)
 {
-	JNI_CALL(size_t, obj, true, env->GetArrayLength(obj));
+	JNI_CALL_RETURN(size_t, obj, true, env->GetArrayLength(obj));
 }
 
 jobjectArray NewObjectArray(jsize length, jclass elementClass, jobject initialElement)
 {
-	JNI_CALL(jobjectArray, elementClass, true, env->NewObjectArray(length, elementClass, initialElement));
+	JNI_CALL_RETURN(jobjectArray, elementClass, true, env->NewObjectArray(length, elementClass, initialElement));
 }
 
 jobject GetObjectArrayElement(jobjectArray obj, size_t index)
 {
-	JNI_CALL(jobject, obj, true, env->GetObjectArrayElement(obj, index));
+	JNI_CALL_RETURN(jobject, obj, true, env->GetObjectArrayElement(obj, index));
 }
 
 void SetObjectArrayElement(jobjectArray obj, size_t index, jobject val)
 {
-	JNI_CALL_NO_RET(obj, true, env->SetObjectArrayElement(obj, index, val));
+	JNI_CALL(obj, true, env->SetObjectArrayElement(obj, index, val));
 }
 
 // --------------------------------------------------------------------------------------

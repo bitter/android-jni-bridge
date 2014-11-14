@@ -102,7 +102,7 @@ private:
 // Only invoke function if 'parameters' == true
 // If function is 'exception safe' only check for exceptions after function has been invoked
 // Only adjust return value on exception if function is not exception safe
-#define JNI_CALL_NO_RET(parameters, check_exception, function)                                          \
+#define JNI_CALL(parameters, check_exception, function)                                                 \
 	JNI_TRACE("%d:%d:%s", static_cast<bool>(parameters), check_exception, #function);                   \
 	JNIEnv* env(AttachCurrentThread());                                                                 \
 	if (env && !CheckForParameterError(parameters) && !(check_exception && CheckForExceptionError(env)))\
@@ -111,16 +111,28 @@ private:
 	    CheckForExceptionError(env);                                                                    \
 	}
 
-#define JNI_CALL(rt, parameters, check_exception, function)                                             \
-	JNI_TRACE("%d:%d:%s %s", static_cast<bool>(parameters), check_exception, #rt, #function);           \
+#define JNI_CALL_RETURN(type, parameters, check_exception, function)                                    \
+	JNI_TRACE("%d:%d:%s %s", static_cast<bool>(parameters), check_exception, #type, #function);         \
 	JNIEnv* env(AttachCurrentThread());                                                                 \
 	if (env && !CheckForParameterError(parameters) && !(check_exception && CheckForExceptionError(env)))\
 	{                                                                                                   \
-		rt JNI_CALL_result = function;                                                                  \
+		type JNI_CALL_result = function;                                                                \
 		if (!(CheckForExceptionError(env) && check_exception))                                          \
 			return JNI_CALL_result;                                                                     \
 	}                                                                                                   \
 	return 0
+
+#define JNI_CALL_DECLARE(type, result, parameters, check_exception, function)                           \
+	JNI_TRACE("%d:%d:%s %s", static_cast<bool>(parameters), check_exception, #type, #function);         \
+	JNIEnv* env(AttachCurrentThread());                                                                 \
+	type result = 0;                                                                                    \
+	if (env && !CheckForParameterError(parameters) && !(check_exception && CheckForExceptionError(env)))\
+	{                                                                                                   \
+		result = function;                                                                              \
+		if (!(CheckForExceptionError(env) && check_exception))                                          \
+			result = 0;                                                                                 \
+	}
+
 
 //----------------------------------------------------------------------------
 // JNI Operations
@@ -144,22 +156,25 @@ public:
 	{
 		va_list args;
 		va_start(args, id);
-		JNI_CALL(JT, object && id, true, static_cast<JT>((env->*CallMethodOP)(object, id, args)));
+		JNI_CALL_DECLARE(JT, result, object && id, true, static_cast<JT>((env->*CallMethodOP)(object, id, args)));
 		va_end(args);
+		return result;
 	}
 	static JT CallNonVirtualMethod(jobject object, jclass clazz, jmethodID id, ...)
 	{
 		va_list args;
 		va_start(args, id);
-		JNI_CALL(JT, object && clazz && id, true, static_cast<JT>((env->*CallNonvirtualMethodOP)(object, clazz, id, args)));
+		JNI_CALL_DECLARE(JT, result, object && clazz && id, true, static_cast<JT>((env->*CallNonvirtualMethodOP)(object, clazz, id, args)));
 		va_end(args);
+		return result;
 	}
 	static JT CallStaticMethod(jclass clazz, jmethodID id, ...)
 	{
 		va_list args;
 		va_start(args, id);
-		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*CallStaticMethodOP)(clazz, id, args)));
+		JNI_CALL_DECLARE(JT, result, clazz && id, true, static_cast<JT>((env->*CallStaticMethodOP)(clazz, id, args)));
 		va_end(args);
+		return result;
 	}
 };
 
@@ -174,19 +189,19 @@ class FieldOps
 public:
 	static JT GetField(jobject object, jfieldID id)
 	{
-		JNI_CALL(JT, object && id, true, static_cast<JT>((env->*GetFieldOP)(object, id)));
+		JNI_CALL_RETURN(JT, object && id, true, static_cast<JT>((env->*GetFieldOP)(object, id)));
 	}
 	static void SetField(jobject object, jfieldID id, const RT& value)
 	{
-		JNI_CALL_NO_RET(object && id, true, (env->*SetFieldOP)(object, id, value));
+		JNI_CALL(object && id, true, (env->*SetFieldOP)(object, id, value));
 	}
 	static JT GetStaticField(jclass clazz, jfieldID id)
 	{
-		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*GetStaticFieldOP)(clazz, id)));
+		JNI_CALL_RETURN(JT, clazz && id, true, static_cast<JT>((env->*GetStaticFieldOP)(clazz, id)));
 	}
 	static void SetStaticField(jclass clazz, jfieldID id, const RT& value)
 	{
-		JNI_CALL_NO_RET(clazz && id, true, (env->*SetStaticFieldOP)(clazz, id, value));
+		JNI_CALL(clazz && id, true, (env->*SetStaticFieldOP)(clazz, id, value));
 	}
 };
 
@@ -201,19 +216,19 @@ class FloatFieldOps
 public:
 	static JT GetField(jobject object, jfieldID id)
 	{
-		JNI_CALL(JT, object && id, true, static_cast<JT>((env->*GetFieldOP)(object, id)));
+		JNI_CALL_RETURN(JT, object && id, true, static_cast<JT>((env->*GetFieldOP)(object, id)));
 	}
 	static void SetField(jobject object, jfieldID id, const RT& value)
 	{
-		JNI_CALL_NO_RET(object && id, true, (env->*SetFieldOP)(object, id, value));
+		JNI_CALL(object && id, true, (env->*SetFieldOP)(object, id, value));
 	}
 	static JT GetStaticField(jclass clazz, jfieldID id)
 	{
-		JNI_CALL(JT, clazz && id, true, static_cast<JT>((env->*GetStaticFieldOP)(clazz, id)));
+		JNI_CALL_RETURN(JT, clazz && id, true, static_cast<JT>((env->*GetStaticFieldOP)(clazz, id)));
 	}
 	static void SetStaticField(jclass clazz, jfieldID id, const RT& value)
 	{
-		JNI_CALL_NO_RET(clazz && id, true, (env->*SetStaticFieldOP)(clazz, id, value));
+		JNI_CALL(clazz && id, true, (env->*SetStaticFieldOP)(clazz, id, value));
 	}
 };
 
@@ -229,23 +244,23 @@ class ArrayOps
 public:
 	static RAT NewArray(jsize size)
 	{
-		JNI_CALL(RAT, true, true, static_cast<RAT>((env->*NewArrayOP)(size)));
+		JNI_CALL_RETURN(RAT, true, true, static_cast<RAT>((env->*NewArrayOP)(size)));
 	}
 	static RT* GetArrayElements(RAT array, jboolean* isCopy = NULL)
 	{
-		JNI_CALL(RT*, array, true, static_cast<RT*>((env->*GetArrayElementsOP)(array, isCopy)));
+		JNI_CALL_RETURN(RT*, array, true, static_cast<RT*>((env->*GetArrayElementsOP)(array, isCopy)));
 	}
 	static void ReleaseArrayElements(RAT array, RT* elements, jint mode = 0)
 	{
-		JNI_CALL_NO_RET(array && elements, true, (env->*ReleaseArrayElementsOP)(array, elements, mode));
+		JNI_CALL(array && elements, true, (env->*ReleaseArrayElementsOP)(array, elements, mode));
 	}
 	static void GetArrayRegion(RAT array, jsize start, jsize len, RT* buffer)
 	{
-		JNI_CALL_NO_RET(array && buffer, true, (env->*GetArrayRegionOP)(array, start, len, buffer));
+		JNI_CALL(array && buffer, true, (env->*GetArrayRegionOP)(array, start, len, buffer));
 	}
 	static void SetArrayRegion(RAT array, jsize start, jsize len, RT* buffer)
 	{
-		JNI_CALL_NO_RET(array && buffer, true, (env->*SetArrayRegionOP)(array, start, len, buffer));
+		JNI_CALL(array && buffer, true, (env->*SetArrayRegionOP)(array, start, len, buffer));
 	}
 };
 
@@ -362,7 +377,7 @@ public:
 	{
 		va_list args;
 		va_start(args, id);
-		JNI_CALL_NO_RET(object && id, true, env->CallVoidMethodV(object, id, args));
+		JNI_CALL(object && id, true, env->CallVoidMethodV(object, id, args));
 		va_end(args);
 		return 0;
 	}
@@ -370,7 +385,7 @@ public:
 	{
 		va_list args;
 		va_start(args, id);
-		JNI_CALL_NO_RET(clazz && id, true, env->CallStaticVoidMethodV(clazz, id, args));
+		JNI_CALL(clazz && id, true, env->CallStaticVoidMethodV(clazz, id, args));
 		va_end(args);
 		return 0;
 	}
