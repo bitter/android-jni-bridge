@@ -129,7 +129,7 @@ private:
 	if (env && !CheckForParameterError(parameters) && !(check_exception && CheckForExceptionError(env)))\
 	{                                                                                                   \
 		result = function;                                                                              \
-		if (!(CheckForExceptionError(env) && check_exception))                                          \
+		if (CheckForExceptionError(env) && check_exception)                                             \
 			result = 0;                                                                                 \
 	}
 
