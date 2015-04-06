@@ -1,10 +1,12 @@
 
-APINAME	= jdk-6
-APIJAR	= /System/Library/Frameworks/JavaVM.framework/Classes/classes.jar
+JAVA_HOME ?= $(shell /usr/libexec/java_home)
+
+APINAME	= jdk
+APIJAR	= ${JAVA_HOME}/jre/lib/rt.jar
 
 DEFINES               := ${DEFINES} -DMACOSX
 CPPFLAGS              := ${CPPFLAGS} -fpic -ffunction-sections -fdata-sections -fvisibility=hidden -MMD
-CPPFLAGS              := ${CPPFLAGS} -I/System/Library/Frameworks/JavaVM.framework/Headers
+CPPFLAGS              := ${CPPFLAGS} -I${JAVA_HOME}/include -I${JAVA_HOME}/include/darwin
 CXXFLAGS              := ${CXXFLAGS} -fno-rtti -fno-exceptions
 LDFLAGS               := ${LDFLAGS}
 CXX                    = g++ ${DEFINES}
