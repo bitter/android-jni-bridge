@@ -29,6 +29,7 @@ my @classes = (
 	'::android::view::Display',
 	'::android::view::WindowManager',
 	'::android::webkit::MimeTypeMap',
+	'::java::lang::Character',
 	'::java::lang::System',
 	'::java::lang::NoSuchMethodError',
 	'::java::lang::ClassCastException',
@@ -60,8 +61,9 @@ sub ZipIt
 
 	# create zip
 	system("cp build/$api/source/*.h build/temp/include") && die("Failed to copy headers.");
-	system("cd build/$api; zip ../builds.zip -r android/*/*.a") && die("Failed to package libraries into zip file.");
-	system("cd build/temp; zip ../builds.zip -r build.txt include") && die("Failed to package headers into zip file.");
+	system("cd build && jar cf temp/jnibridge.jar bitter") && die("Failed to create java class archive.");
+	system("cd build/$api && zip ../builds.zip -r android/*/*.a") && die("Failed to package libraries into zip file.");
+	system("cd build/temp && zip ../builds.zip -r build.txt jnibridge.jar include") && die("Failed to package zip file.");
 	system("rm -r build/temp") && die("Unable to remove temp directory.");
 }
 

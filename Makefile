@@ -17,6 +17,7 @@ else
 endif
 
 JAVAFLAGS	= -XX:MaxPermSize=128M
+JAVACFLAGS  = -source 1.6 -target 1.6
 
 CPPFLAGS	+= -g0 -O2 -Wall -Werror -Wno-long-long
 

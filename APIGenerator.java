@@ -44,6 +44,16 @@ public class APIGenerator
 			System.exit(1);			
 		}
 
+		// We need this to box proxy values
+		args.add("::java::lang::Byte");
+		args.add("::java::lang::Short");
+		args.add("::java::lang::Integer");
+		args.add("::java::lang::Long");
+		args.add("::java::lang::Float");
+		args.add("::java::lang::Double");
+		args.add("::java::lang::Character");
+		args.add("::java::lang::Boolean");
+
 		APIGenerator generator = new APIGenerator();
 		generator.collectDependencies(new JarFile(jar), args);
 		generator.print(dst);
@@ -58,15 +68,21 @@ public class APIGenerator
 		{
 			String name = entries.nextElement().getName();
 			if (name.endsWith(".class"))
-				m_AllClasses.add(customClasses.loadClass(name.substring(0, name.length() - 6).replace("/", ".")));
+			{
+				try
+				{
+					m_AllClasses.add(customClasses.loadClass(name.substring(0, name.length() - 6).replace("/", ".")));
+				} catch (Throwable ignore) {}
+			}
 		}
 		System.err.format("Searching for candidates\n");
-		for (Class clazz : m_AllClasses)
+		for (String arg : args)
 		{
-			String cppClassName = getClassName(clazz);
-			for (String arg : args)
+			Pattern pattern = Pattern.compile(arg);
+			for (Class clazz : m_AllClasses)
 			{
-				if (!Pattern.matches(arg, cppClassName))
+				String cppClassName = getClassName(clazz);
+				if (!pattern.matcher(cppClassName).matches())
 					continue;
 				int nClasses = m_DependencyChain.size();
 				collectDependencies(clazz);
@@ -232,6 +248,38 @@ public class APIGenerator
 		return "L" + clazz.getName().replace('.', '/') + ";";
 	}
 
+	private Class box(Class clazz)
+	{
+		if (clazz.isPrimitive())
+		{
+			if (clazz.equals(byte.class))	return Byte.class;
+			if (clazz.equals(short.class))	return Short.class;
+			if (clazz.equals(int.class))	return Integer.class;
+			if (clazz.equals(long.class))	return Long.class;
+			if (clazz.equals(float.class))	return Float.class;
+			if (clazz.equals(double.class))	return Double.class;
+			if (clazz.equals(char.class))	return Character.class;
+			if (clazz.equals(boolean.class))return Boolean.class;
+		}
+		return clazz;
+	}
+
+	private String runtimeUnbox(Class clazz)
+	{
+		if (clazz.isPrimitive())
+		{
+			if (clazz.equals(byte.class))	return ".ByteValue()";
+			if (clazz.equals(short.class))	return ".ShortValue()";
+			if (clazz.equals(int.class))	return ".IntValue()";
+			if (clazz.equals(long.class))	return ".LongValue()";
+			if (clazz.equals(float.class))	return ".FloatValue()";
+			if (clazz.equals(double.class))	return ".DoubleValue()";
+			if (clazz.equals(char.class))	return ".CharValue()";
+			if (clazz.equals(boolean.class))return ".BooleanValue()";
+		}
+		return "";
+	}
+
 	private String getSignature(Class... clazzes) throws Exception
 	{
 		StringBuilder signature = new StringBuilder();
@@ -371,6 +419,22 @@ public class APIGenerator
 		return buffer.toString();
 	}
 
+	private String getParametersFromJNIObjectArray(Class<?>[] parameterTypes)
+	{
+		StringBuilder buffer = new StringBuilder();
+		for (int i = 0; i < parameterTypes.length; ++i)
+		{
+			if (i > 0)
+				buffer.append(", ");
+			buffer.append(getClassName(box(parameterTypes[i])));
+			buffer.append("(jni::GetObjectArrayElement(args, ");
+			buffer.append(i);
+			buffer.append("))");
+			buffer.append(runtimeUnbox(parameterTypes[i]));
+		}
+		return buffer.toString();
+	}
+
 	private void print(String dst) throws Exception
 	{
 		System.err.println("Generating cpp code");
@@ -418,7 +482,39 @@ public class APIGenerator
 			header.format("\toperator %s();\n", getClassName(interfaze));
 
 		declareClassMembers(header, clazz);
+
+		if (clazz.isInterface())
+			declareProxy(header, clazz);
+
 		header.format("};\n\n");
+	}
+
+	private void declareProxy(PrintStream header, Class clazz) throws Exception
+	{
+		header.format("\tstruct Proxy : private jni::Proxy\n");
+		header.format("\t{\n");
+		header.format("\t\toperator %s();\n", getClassName(clazz));
+		// Use cast operators for interfaces to avoid deadly diamond of death
+		for (Class interfaze : clazz.getInterfaces())
+			header.format("\t\toperator %s();\n", getClassName(interfaze));
+		declareProxyMembers(header, clazz);
+		header.format("\t};\n");
+	}
+
+	private void declareProxyMembers(PrintStream out, Class clazz) throws Exception
+	{
+		out.format("\tprotected:\n");
+		out.format("\t\tvirtual jobject __Invoke(jmethodID, jobjectArray);\n");
+		for (Method method : clazz.getDeclaredMethods())
+		{
+			if (!isValid(method) || isStatic(method))
+				continue;
+			out.format("\t\tvirtual %s %s(%s) = 0;\n",
+				method.getReturnType() == void.class ? "void" : getClassName(method.getReturnType()),
+				getMethodName(method),
+				getParameterSignature(method.getParameterTypes()));
+		}
+		out.format("\t\tProxy();\n");
 	}
 
 	private void declareClassMembers(PrintStream out, Class clazz) throws Exception
@@ -513,7 +609,60 @@ public class APIGenerator
 		if (tempalteFile.exists())
 			out.format("%s\n",	new Scanner(tempalteFile).useDelimiter("\\Z").next());
 
+		if (clazz.isInterface())
+			implementProxy(out, clazz);
+
 		closeNameSpace(out, namespace);
+	}
+
+	private void implementProxy(PrintStream out, Class clazz) throws Exception
+	{
+		out.format("%s::Proxy::Proxy() : jni::Proxy(%s::__CLASS) {}\n", getSimpleName(clazz), getSimpleName(clazz));
+		out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
+		for (Class interfaze : clazz.getInterfaces())
+			out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
+		out.format("jobject %s::Proxy::__Invoke(jmethodID methodID, jobjectArray args) {\n", getSimpleName(clazz));
+
+		int nMethods = 0;
+		Method[] methods = clazz.getDeclaredMethods();
+		for (Method method : methods)
+		{
+			if (!isValid(method) || isStatic(method))
+				continue;
+			++nMethods;
+		}
+
+		if (nMethods == 0) { out.format("\treturn 0;\n}"); return; }
+
+		out.format("\tstatic jmethodID methodIDs[] = {\n");
+		for (Method method : methods)
+		{
+			if (!isValid(method) || isStatic(method))
+				continue;
+			out.format("\t\tjni::GetMethodID(__CLASS, \"%s\", \"%s\"),\n", method.getName(), getMethodSignature(method));
+		}
+		out.format("\t};\n");
+		int i = 0;
+		for (Method method : methods)
+		{
+			if (!isValid(method) || isStatic(method))
+				continue;
+			Class returnType = method.getReturnType();
+			Class[] params = method.getParameterTypes();
+			if (returnType != void.class)
+				out.format("\tif (methodIDs[%d] == methodID) { return static_cast< %s >(%s(%s)); }\n",
+					i++,
+					getClassName(box(returnType)),
+					getMethodName(method),
+					getParametersFromJNIObjectArray(params));
+			else
+				out.format("\tif (methodIDs[%d] == methodID) { %s(%s); return 0; }\n",
+					i++,
+					getMethodName(method),
+					getParametersFromJNIObjectArray(params));
+		}
+		// put warning here?
+		out.format("\treturn 0;\n}");
 	}
 
 	private void implementClassMembers(PrintStream out, Class clazz) throws Exception

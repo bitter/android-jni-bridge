@@ -104,6 +104,23 @@ protected:
 	GlobalRef<jobject> m_Object;
 };
 
+class Proxy
+{
+protected:
+	Proxy(Class& interfaze);
+	virtual ~Proxy();
+
+private:
+	Proxy(const Proxy& proxy);
+	Proxy& operator = (const Proxy& o);
+
+public:
+	static bool __Register();
+	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
+
+protected:
+	GlobalRef<jobject> m_Object;
+};
 
 template <typename T>
 class ArrayBase
@@ -151,6 +168,7 @@ template <typename T>
 class Array : public ArrayBase<jobjectArray>
 {
 public:
+	explicit inline Array(jobject obj) : ArrayBase<jobjectArray>(static_cast<jobjectArray>(obj)) {};
 	explicit inline Array(jobjectArray obj) : ArrayBase<jobjectArray>(obj) {};
 	explicit inline Array(size_t length, T initialElement = 0) : ArrayBase<jobjectArray>(jni::NewObjectArray(length, T::__CLASS, initialElement)) {};
 
@@ -176,7 +194,8 @@ template <> \
 class Array<t> : public PrimitiveArrayBase<t, t##Array> \
 { \
 public: \
-	explicit inline Array(t##Array obj) : PrimitiveArrayBase<t, t##Array>(obj) {}; \
+	explicit inline Array(jobject   obj) : PrimitiveArrayBase<t, t##Array>(static_cast<t##Array>(obj)) {}; \
+	explicit inline Array(t##Array  obj) : PrimitiveArrayBase<t, t##Array>(obj) {}; \
 	explicit inline Array(size_t length) : PrimitiveArrayBase<t, t##Array>(jni::Op<t>::NewArray(length)) {}; \
 };
 
