@@ -147,42 +147,47 @@ our $ndks =
 					},
 };
 
+our $google_play_services =
+{
+	"24" => "google_play_services_7327000_r24.zip"
+};
+
 our ($HOST_ENV, $TMP, $HOME, $WINZIP);
 
 sub GetAndroidSDK
 {
-if(lc $^O eq 'darwin')
-{
+	if(lc $^O eq 'darwin')
+	{
 		$HOST_ENV = "macosx";
 		$TMP = $ENV{"TMPDIR"};
 		$HOME = $ENV{"HOME"};
-}
-elsif(lc $^O eq 'linux')
-{
-	$HOST_ENV = "linux";
-	$TMP = "/tmp";
-	$HOME = $ENV{"HOME"};
-}
-elsif(lc $^O eq 'mswin32')
-{
-	$HOST_ENV = "windows";
-	$TMP = $ENV{"TMP"};
-	$HOME = $ENV{"USERPROFILE"};
-	if (-e "Tools/WinUtils/7z/7z.exe")
-	{
-		$WINZIP = "Tools/WinUtils/7z/7z.exe";
 	}
-}
-elsif(lc $^O eq 'cygwin')
-{
-	$HOST_ENV = "windows";
-	$TMP = $ENV{"TMP"};
-	$HOME = $ENV{"HOME"};
-}
-else
-{
-	die "UNKNOWN " . $^O;
-}
+	elsif(lc $^O eq 'linux')
+	{
+		$HOST_ENV = "linux";
+		$TMP = "/tmp";
+		$HOME = $ENV{"HOME"};
+	}
+	elsif(lc $^O eq 'mswin32')
+	{
+		$HOST_ENV = "windows";
+		$TMP = $ENV{"TMP"};
+		$HOME = $ENV{"USERPROFILE"};
+		if (-e "Tools/WinUtils/7z/7z.exe")
+		{
+			$WINZIP = "Tools/WinUtils/7z/7z.exe";
+		}
+	}
+	elsif(lc $^O eq 'cygwin')
+	{
+		$HOST_ENV = "windows";
+		$TMP = $ENV{"TMP"};
+		$HOME = $ENV{"HOME"};
+	}
+	else
+	{
+		die "UNKNOWN " . $^O;
+	}
 
 	print "Environment:\n";
 	print "\tHost      = $HOST_ENV\n";
@@ -193,52 +198,59 @@ else
 	print "\t\$$NDK_ROOT_ENV = $ENV{$NDK_ROOT_ENV}\n" if ($ENV{$NDK_ROOT_ENV});
 	print "\n";
 
-my ($sdk, $tools, $ndk, $setenv) = @_;
+	my ($sdk, $tools, $ndk, $gps, $setenv) = @_;
 
-if ($sdk or $tools)
-{
-	if ($sdk)
+	if ($sdk or $tools)
 	{
-		print "Installing SDK '$sdk':\n";
-	}
-	elsif($tools)
-	{
-		print "Installing SDK Tools '$tools':\n";
+		if ($sdk)
+		{
+			print "Installing SDK '$sdk':\n";
+		}
+		elsif($tools)
+		{
+			print "Installing SDK Tools '$tools':\n";
+		}
+
+		if (!$ENV{$SDK_ROOT_ENV})
+		{
+			$ENV{$SDK_ROOT_ENV} = catfile($HOME, "android-sdk_auto");
+			print "\t\$$SDK_ROOT_ENV not set; using $ENV{$SDK_ROOT_ENV} instead\n";
+		}
+
+		if (not $tools and $sdk)
+		{
+			my @split = split('-', $sdk);
+			$tools = $split[1];
+		}
+		if ($tools)
+		{
+			PrepareSDKTools($tools);
+		}
+		if ($sdk)
+		{
+			PrepareSDK($sdk);
+		}
+		print "\n";
 	}
 
-	if (!$ENV{$SDK_ROOT_ENV})
+	if ($ndk)
 	{
-		$ENV{$SDK_ROOT_ENV} = catfile($HOME, "android-sdk_auto");
-		print "\t\$$SDK_ROOT_ENV not set; using $ENV{$SDK_ROOT_ENV} instead\n";
+		print "Installing NDK '$ndk':\n";
+		if (!$ENV{$NDK_ROOT_ENV})
+		{
+			$ENV{$NDK_ROOT_ENV} = catfile($HOME, "android-ndk_auto-" . $ndk);
+			print "\t\$$NDK_ROOT_ENV not set; using $ENV{$NDK_ROOT_ENV} instead\n";
+		}
+		PrepareNDK($ndk);
+		print "\n";
 	}
 
-	if (not $tools and $sdk)
+	if ($gps)
 	{
-		my @split = split('-', $sdk);
-		$tools = $split[1];
+		print "Installing Google Play Services '$gps':\n";
+		PrepareGPS($gps);
+		print "\n";
 	}
-	if ($tools)
-	{
-		PrepareSDKTools($tools);
-	}
-	if ($sdk)
-	{
-		PrepareSDK($sdk);
-	}
-	print "\n";
-}
-
-if ($ndk)
-{
-	print "Installing NDK '$ndk':\n";
-	if (!$ENV{$NDK_ROOT_ENV})
-	{
-		$ENV{$NDK_ROOT_ENV} = catfile($HOME, "android-ndk_auto-" . $ndk);
-		print "\t\$$NDK_ROOT_ENV not set; using $ENV{$NDK_ROOT_ENV} instead\n";
-	}
-	PrepareNDK($ndk);
-	print "\n";
-}
 
 	my $export = "export";
 	if (lc $^O eq 'mswin32')
@@ -325,6 +337,27 @@ sub PrepareSDK
 	my $output = catfile($sdk_root, "platforms", $sdk);
 	print "\tDownloading '$platform' to '$output'\n";
 	DownloadAndUnpackArchive($BASE_URL_SDK . $platform, $output);
+}
+
+sub PrepareGPS
+{
+	my $sdk_root = $ENV{$SDK_ROOT_ENV};
+
+	my ($gps_version) = @_;
+
+	my $gps = $google_play_services->{$gps_version};
+	die ("Unknown Google Play Services version '$gps_version'") if (!$gps);
+
+	my $output = catfile($sdk_root, "extras", "google", "google_play_services");
+
+	if (-e $output)
+	{
+		print "\tGoogle Play Services version '$gps_version' is already installed\n";
+		return;
+	}
+
+	print "\tDownloading '$gps' to '$output'\n";
+	DownloadAndUnpackArchive($BASE_URL_SDK . $gps, $output);
 }
 
 sub IsPlatformInstalled
