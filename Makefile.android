@@ -1,6 +1,7 @@
 
 APINAME	= android-17
 APIJAR	= ${ANDROID_SDK_ROOT}/platforms/${APINAME}/android.jar
+GPSJAR  = ${ANDROID_SDK_ROOT}/extras/google/google_play_services/libproject/google-play-services_lib/libs/google-play-services.jar
 
 API     = android-9
 SDK		= ${ANDROID_SDK_ROOT}
