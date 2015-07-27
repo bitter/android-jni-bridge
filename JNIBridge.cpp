@@ -256,6 +256,16 @@ void DeleteGlobalRef(jobject object)
 	JNI_CALL(object, false, env->DeleteGlobalRef(object));
 }
 
+jobject NewWeakGlobalRef(jobject object)
+{
+	JNI_CALL_RETURN(jobject, object, true, env->NewWeakGlobalRef(object));
+}
+
+void DeleteWeakGlobalRef(jobject object)
+{
+	JNI_CALL(object, false, env->DeleteWeakGlobalRef(object));
+}
+
 jclass GetObjectClass(jobject object)
 {
 	JNI_CALL_RETURN(jclass, object, true, env->GetObjectClass(object));

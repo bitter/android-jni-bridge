@@ -4,16 +4,30 @@
 namespace jni
 {
 
-template <typename T>
-class GlobalRef
+class GlobalRefAllocator
 {
 public:
-	GlobalRef(T object) { m_Ref = new Reference(object); }
-	GlobalRef(const GlobalRef<T>& o) { Aquire(o.m_Ref); }
-	~GlobalRef() { Release(); }
+	static jobject Alloc(jobject o) { return jni::NewGlobalRef(o); }
+	static void    Free(jobject o)  { return jni::DeleteGlobalRef(o); }
+};
 
-	inline operator T() const	{ return *m_Ref; }
-	GlobalRef<T>& operator = (const GlobalRef<T>& o)
+class WeakGlobalRefAllocator
+{
+public:
+	static jobject Alloc(jobject o) { return jni::NewWeakGlobalRef(o); }
+	static void    Free(jobject o)  { return jni::DeleteWeakGlobalRef(o); }
+};
+
+template <typename RefType, typename ObjType>
+class Ref
+{
+public:
+	Ref(ObjType object) { m_Ref = new RefCounter(object); }
+	Ref(const Ref<RefType,ObjType>& o) { Aquire(o.m_Ref); }
+	~Ref() { Release(); }
+
+	inline operator ObjType() const	{ return *m_Ref; }
+	Ref<RefType,ObjType>& operator = (const Ref<RefType,ObjType>& o)
 	{
 		if (m_Ref == o.m_Ref)
 			return *this;
@@ -25,31 +39,31 @@ public:
 	}
 
 private:
-	class Reference
+	class RefCounter
 	{
 	public:
-		Reference(T object)
+		RefCounter(ObjType object)
 		{
-			m_Object = static_cast<T>(object ? jni::NewGlobalRef(object) : 0);
+			m_Object = static_cast<ObjType>(object ? RefType::Alloc(object) : 0);
 			m_Counter = 1;			
 		}
-		~Reference()
+		~RefCounter()
 		{
 			if (m_Object)
-				jni::DeleteGlobalRef(m_Object);
+				RefType::Free(m_Object);
 			m_Object = 0;			
 		}
 
-		inline operator T() const { return m_Object; }
+		inline operator ObjType() const { return m_Object; }
 		void Aquire() { __sync_add_and_fetch(&m_Counter, 1); }
 		bool Release() { return __sync_sub_and_fetch(&m_Counter, 1); }
 
 	private:
-		T      m_Object;
+		ObjType      m_Object;
 		volatile int m_Counter;
 	};
 
-	void Aquire(Reference* ref)
+	void Aquire(RefCounter* ref)
 	{
 		m_Ref = ref;
 		m_Ref->Aquire();
@@ -65,7 +79,7 @@ private:
 	}
 
 private:
-	class Reference* m_Ref;
+	class RefCounter* m_Ref;
 };
 
 
@@ -88,38 +102,39 @@ private:
 	Class& operator = (const Class& o);
 
 private:
-	char*             m_ClassName;
-	GlobalRef<jclass> m_Class;
+	char*       m_ClassName;
+	Ref<GlobalRefAllocator, jclass> m_Class;
 };
 
 class Object
 {
 public:
-	explicit inline Object(jobject obj) : m_Object(obj) {}
+	explicit inline Object(jobject obj) : m_Object(obj) { }
 
 	inline operator bool() const	{ return m_Object != 0; }
 	inline operator jobject() const	{ return m_Object; }
 
 protected:
-	GlobalRef<jobject> m_Object;
+	Ref<GlobalRefAllocator, jobject> m_Object;
 };
 
 class Proxy
 {
 protected:
 	Proxy(Class& interfaze);
-	virtual ~Proxy();
 
 private:
 	Proxy(const Proxy& proxy);
-	Proxy& operator = (const Proxy& o);
+
+public:
+	virtual ~Proxy();
+	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
 
 public:
 	static bool __Register();
-	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
 
 protected:
-	GlobalRef<jobject> m_Object;
+	Ref<WeakGlobalRefAllocator, jobject> m_Object;
 };
 
 template <typename T>
@@ -134,7 +149,7 @@ public:
 	inline operator T() const { return m_Array; }
 
 protected:
-	GlobalRef<T> m_Array;
+	Ref<GlobalRefAllocator, T> m_Array;
 };
 
 template <typename T, typename AT>

@@ -4,6 +4,9 @@ import java.lang.reflect.*;
 
 public class JNIBridge
 {
+	static native Object invoke(long ptr, Method method, Object[] args);
+	static native void   delete(long ptr);
+
 	static Object newInterfaceProxy(final long ptr, final Class interfaze)
 	{
 		return Proxy.newProxyInstance(interfaze.getClassLoader(), new Class[] {interfaze}, new InterfaceProxy(ptr));
@@ -13,8 +16,6 @@ public class JNIBridge
 	{
 		((InterfaceProxy) Proxy.getInvocationHandler(proxy)).disable();
 	}
-
-	static native Object invoke(long ptr, Method method, Object[] args);
 
 	private static class InterfaceProxy implements InvocationHandler
 	{
@@ -30,6 +31,16 @@ public class JNIBridge
 				if (m_Ptr == 0)
 					return null;
 				return JNIBridge.invoke(m_Ptr, method, args);
+			}
+		}
+
+		public void finalize()
+		{
+			synchronized (m_InvocationLock)
+			{
+				if (m_Ptr == 0)
+					return;
+				JNIBridge.delete(m_Ptr);
 			}
 		}
 

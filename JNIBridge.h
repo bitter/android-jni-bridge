@@ -54,6 +54,8 @@ void         FatalError(const char* str);
 
 jobject      NewGlobalRef(jobject obj);
 void         DeleteGlobalRef(jobject obj);
+jobject      NewWeakGlobalRef(jobject obj);
+void         DeleteWeakGlobalRef(jobject obj);
 
 jclass       GetObjectClass(jobject object);
 jboolean     IsInstanceOf(jobject object, jclass clazz);
