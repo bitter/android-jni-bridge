@@ -28,13 +28,13 @@ JNIEXPORT void JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_delet
 	delete (Proxy*)ptr;
 }
 
-Proxy::Proxy(jni::Class& interfaze, Proxy::ReferenceType refType) : m_Object(NULL), m_StrongRef(NULL)
+Proxy::Proxy(jni::Class& interfaze, jni::ProxyReferenceType refType) : m_Object(NULL), m_StrongRef(NULL)
 {
     static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
     static jmethodID newProxyMID = jni::GetStaticMethodID(jniBridge, "newInterfaceProxy", "(JLjava/lang/Class;)Ljava/lang/Object;");
     if (newProxyMID)
         m_Object = jni::Op<jobject>::CallStaticMethod(jniBridge, newProxyMID, (jlong) this, static_cast<jclass>(interfaze));
-    if (refType == kStronglyReferenced)
+    if (refType == jni::kProxyStronglyReferenced)
         m_StrongRef = (jobject)m_Object;
 }
 

@@ -118,16 +118,16 @@ protected:
 	Ref<GlobalRefAllocator, jobject> m_Object;
 };
 
+enum ProxyReferenceType
+{
+	kProxyWeaklyReferenced,  // Native object will be automatically deleted when java object goes out of scope.
+	kProxyStronglyReferenced // Requires explicit deletion of the native object for the java object to be garbage collected.
+};
+
 class Proxy
 {
 protected:
-	enum ReferenceType
-	{
-		kWeaklyReferenced,  // Native object will be automatically deleted when java object goes out of scope.
-		kStronglyReferenced // Requires explicit deletion of the native object for the java object to be garbage collected.
-	};
-
-	Proxy(Class& interfaze, ReferenceType refType);
+	Proxy(Class& interfaze, ProxyReferenceType refType);
 
 public:
 	virtual ~Proxy();
