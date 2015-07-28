@@ -121,10 +121,13 @@ protected:
 class Proxy
 {
 protected:
-	Proxy(Class& interfaze);
+	enum ReferenceType
+	{
+		kWeaklyReferenced,  // Native object will be automatically deleted when java object goes out of scope.
+		kStronglyReferenced // Requires explicit deletion of the native object for the java object to be garbage collected.
+	};
 
-private:
-	Proxy(const Proxy& proxy);
+	Proxy(Class& interfaze, ReferenceType refType);
 
 public:
 	virtual ~Proxy();
@@ -133,8 +136,13 @@ public:
 public:
 	static bool __Register();
 
+private:
+	Proxy(const Proxy& proxy);
+	Proxy& operator = (const Proxy& o);
+
 protected:
 	Ref<WeakGlobalRefAllocator, jobject> m_Object;
+	Ref<GlobalRefAllocator,     jobject> m_StrongRef;
 };
 
 template <typename T>

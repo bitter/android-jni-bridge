@@ -514,7 +514,7 @@ public class APIGenerator
 				getMethodName(method),
 				getParameterSignature(method.getParameterTypes()));
 		}
-		out.format("\t\tProxy();\n");
+		out.format("\t\tProxy(ReferenceType refType = kStronglyReferenced);\n");
 	}
 
 	private void declareClassMembers(PrintStream out, Class clazz) throws Exception
@@ -617,7 +617,7 @@ public class APIGenerator
 
 	private void implementProxy(PrintStream out, Class clazz) throws Exception
 	{
-		out.format("%s::Proxy::Proxy() : jni::Proxy(%s::__CLASS) {}\n", getSimpleName(clazz), getSimpleName(clazz));
+		out.format("%s::Proxy::Proxy(Proxy::ReferenceType refType) : jni::Proxy(%s::__CLASS, refType) {}\n", getSimpleName(clazz), getSimpleName(clazz));
 		out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
 		for (Class interfaze : clazz.getInterfaces())
 			out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
