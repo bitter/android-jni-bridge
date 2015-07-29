@@ -316,7 +316,7 @@ public class APIGenerator
 	{
 		Class superClass = clazz.getSuperclass();
 		if (superClass == null)
-			return "jni::Object";
+			return clazz.isInterface() ? "java::lang::Object" : "jni::Object";
 		else
 			return getClassName(superClass);
 	}
