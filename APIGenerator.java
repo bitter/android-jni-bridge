@@ -7,7 +7,7 @@ import java.util.jar.*;
 import java.util.regex.*;
 
 public class APIGenerator
-{	
+{
 	final static Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(new String[] {
 		"Assert", "asm", "namespace"
 	}));
@@ -25,23 +25,44 @@ public class APIGenerator
 		LinkedList<String> args = new LinkedList<String>(Arrays.asList(argsArray));
 		if (args.size() < 2)
 		{
-			System.err.format("Usage: APIGenerator <dst> <jarfile> <regex...>\n");
+			System.err.format("Usage: APIGenerator <dst> <jarfile[;jarfile;...]> <regex...>\n");
 			System.exit(1);
 		}
 		String dst = args.pollFirst();
 		if (!new File(dst).isDirectory())
 		{
-			System.err.format("Usage: APIGenerator <dst> <jarfile> <regex...>\n");
+			System.err.format("Usage: APIGenerator <dst> <jarfile[;jarfile;...]> <regex...>\n");
 			System.err.format("%s: is not a directory.\n", dst);
-			System.exit(1);			
+			System.exit(1);
 		}
 
-		String jar = args.pollFirst();
-		if (!new File(jar).isFile())
+		String jarList = args.pollFirst();
+		LinkedList<JarFile> jars = new LinkedList<JarFile>();
+		if(jarList.contains(";"))
 		{
-			System.err.format("Usage: APIGenerator <dst> <jarfile> <regex...>\n");
-			System.err.format("%s: is not a jar file.\n", jar);
-			System.exit(1);			
+			for(String jar : jarList.split(";"))
+			{
+				if (!new File(jar).isFile())
+				{
+					System.err.format("Usage: APIGenerator <dst> <jarfile[;jarfile;...]> <regex...>\n");
+					System.err.format("%s: is not a jar file.\n", jar);
+					System.exit(1);
+				}
+				else
+				{
+					jars.push(new JarFile(jar));
+				}
+			}
+		}
+		else if (!new File(jarList).isFile())
+		{
+			System.err.format("Usage: APIGenerator <dst> <jarfile[;jarfile;...]> <regex...>\n");
+			System.err.format("%s: is not a jar file.\n", jarList);
+			System.exit(1);
+		}
+		else
+		{
+			jars.push(new JarFile(jarList));
 		}
 
 		// We need this to box proxy values
@@ -55,26 +76,37 @@ public class APIGenerator
 		args.add("::java::lang::Boolean");
 
 		APIGenerator generator = new APIGenerator();
-		generator.collectDependencies(new JarFile(jar), args);
+		generator.collectDependencies(jars, args);
 		generator.print(dst);
 	}
 
-	public void collectDependencies(JarFile file, LinkedList<String> args) throws Exception
+	public void collectDependencies(LinkedList<JarFile> files, LinkedList<String> args) throws Exception
 	{
-		System.err.format("Loading classes from '%s'\n", file.getName());
-		URLClassLoader customClasses = new URLClassLoader(new URL[]{new File(file.getName()).toURI().toURL()}, null);
-		Enumeration<JarEntry> entries = file.entries();
-		while (entries.hasMoreElements())
+		LinkedList<URL> urls = new LinkedList<URL>();
+		for(JarFile file : files)
 		{
-			String name = entries.nextElement().getName();
-			if (name.endsWith(".class"))
+			urls.push(new File(file.getName()).toURI().toURL());
+		}
+		URLClassLoader customClasses = new URLClassLoader(urls.toArray(new URL[urls.size()]), null);
+
+		for(JarFile file : files)
+		{
+			System.err.format("Loading classes from '%s'\n", file.getName());
+
+			Enumeration<JarEntry> entries = file.entries();
+			while (entries.hasMoreElements())
 			{
-				try
+				String name = entries.nextElement().getName();
+				if (name.endsWith(".class"))
 				{
-					m_AllClasses.add(customClasses.loadClass(name.substring(0, name.length() - 6).replace("/", ".")));
-				} catch (Throwable ignore) {}
+					try
+					{
+						m_AllClasses.add(customClasses.loadClass(name.substring(0, name.length() - 6).replace("/", ".")));
+					} catch (Throwable ignore) {}
+				}
 			}
 		}
+
 		System.err.format("Searching for candidates\n");
 		for (String arg : args)
 		{
@@ -93,7 +125,7 @@ public class APIGenerator
 	}
 
 	public void collectDependencies(Class clazz) throws Exception
-	{		
+	{
 		clazz = collectDirectDependencies(clazz);
 		if (clazz == null)
 			return;
@@ -126,7 +158,7 @@ public class APIGenerator
 			collectDependencies(method.getReturnType());
 		}
 
-		for (Constructor constructor : clazz.getDeclaredConstructors())			
+		for (Constructor constructor : clazz.getDeclaredConstructors())
 		{
 			if (!isValid(constructor))
 				continue;
@@ -464,7 +496,7 @@ public class APIGenerator
 		for (Class clazz : m_DependencyChain)
 		{
 			currentNameSpace = enterNameSpace(header, currentNameSpace, clazz);
-			declareClass(header, clazz);			
+			declareClass(header, clazz);
 		}
 		currentNameSpace = closeNameSpace(header, currentNameSpace);
 		header.close();

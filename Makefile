@@ -41,8 +41,8 @@ ${GENDIR}/Makefile: Makefile.api *.cpp *.h | ${GENDIR}
 	cp Makefile.api ${GENDIR}/Makefile
 
 api-source: ${GENDIR}/API.h ;
-${GENDIR}/API.h: ${APIJAR} ${APIGENERATOR_CLASSES} templates/* | ${GENDIR}
-	${JAVA} ${JAVAFLAGS} -cp ${BUILDDIR} APIGenerator ${GENDIR} ${APIJAR} ${APICLASSES}
+${GENDIR}/API.h: ${APIJAR} ${GPSJAR} ${APIGENERATOR_CLASSES} templates/* | ${GENDIR}
+	${JAVA} ${JAVAFLAGS} -cp ${BUILDDIR} APIGenerator ${GENDIR} "${APIJAR};${GPSJAR}" ${APICLASSES}
 
 api-generator: ${APIGENERATOR_CLASSES} ;
 ${BUILDDIR}/%.class: %.java | ${BUILDDIR}

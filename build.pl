@@ -33,7 +33,11 @@ my @classes = (
 	'::java::lang::System',
 	'::java::lang::NoSuchMethodError',
 	'::java::lang::ClassCastException',
-	'::java::lang::UnsatisfiedLinkError'
+	'::java::lang::UnsatisfiedLinkError',
+
+	'::com::google::android::gms::ads::identifier::AdvertisingIdClient',
+	'::com::google::android::gms::common::GooglePlayServicesAvailabilityException',
+	'::com::google::android::gms::common::GooglePlayServicesNotAvailableException'
 );
 
 sub BuildAndroid
@@ -41,7 +45,7 @@ sub BuildAndroid
 	my $class_names = join(' ', @classes);
 	my $threads = 8;
 
-    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "r10c");
+    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "r10c", "24");
 
     system("make clean") && die("Clean failed");
     system("make -j$threads PLATFORM=android ABI=mips        APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv7 library");
