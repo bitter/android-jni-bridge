@@ -176,6 +176,9 @@ int main(int,char**)
 		System::Gc();
 	}
 
+	java::lang::CharSequence string = "hello world";
+	printf("%s\n", static_cast<const char*>(string));
+
     printf("%s\n", "EOP");
 
     // print resolution of clock()

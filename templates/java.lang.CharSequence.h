@@ -1,0 +1,1 @@
+CharSequence(const char* str);
