@@ -11,18 +11,18 @@ using namespace java::util;
 int main(int,char**)
 {	
 	JavaVM* vm;
-    void* envPtr;
-    JavaVMInitArgs vm_args;
-    memset(&vm_args, 0, sizeof(vm_args));
+	void* envPtr;
+	JavaVMInitArgs vm_args;
+	memset(&vm_args, 0, sizeof(vm_args));
 
-    char classPath[] = {"-Djava.class.path=../build"};
+	char classPath[] = {"-Djava.class.path=../build"};
 
-    JavaVMOption options[1];
-    options[0].optionString = classPath;
+	JavaVMOption options[1];
+	options[0].optionString = classPath;
 
-    vm_args.options = options;
-    vm_args.nOptions = 1;
-    vm_args.version = JNI_VERSION_1_6;
+	vm_args.options = options;
+	vm_args.nOptions = 1;
+	vm_args.version = JNI_VERSION_1_6;
 	JNI_CreateJavaVM(&vm, &envPtr, &vm_args);
 
 	JNIEnv* env = (JNIEnv*)envPtr;
@@ -105,38 +105,38 @@ int main(int,char**)
 			out.Println(properties.GetProperty(jni::Cast<String>(keys.NextElement())));
 	}
 	gettimeofday(&stop, NULL);
-    printf("%f ms.\n", (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
+	printf("%f ms.\n", (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
 
-    // -------------------------------------------------------------
-    // Proxy test
-    // -------------------------------------------------------------
-    if (!jni::Proxy::__Register())
-    	printf("%s\n", jni::GetErrorMessage());
+	// -------------------------------------------------------------
+	// Proxy test
+	// -------------------------------------------------------------
+	if (!jni::Proxy::__Register())
+		printf("%s\n", jni::GetErrorMessage());
 
 	struct PretendRunnable : Runnable::Proxy
 	{
 		virtual void Run() {printf("%s\n", "hello world!!!!"); }
 	};
 
-    PretendRunnable pretendRunnable;
-    Runnable runnable = pretendRunnable;
+	PretendRunnable pretendRunnable;
+	Runnable runnable = pretendRunnable;
 
-    Thread     thread(pretendRunnable);
-    thread.Start();
-    thread.Join();
+	Thread     thread(pretendRunnable);
+	thread.Start();
+	thread.Join();
 
-    runnable.Run();
+	runnable.Run();
 
-    // Make sure we don't get crashes from deleting the native object.
-    PretendRunnable* pretendRunnable2 = new PretendRunnable;
-    Runnable runnable2 = *pretendRunnable2;
-    runnable2.Run();
-    delete pretendRunnable2;
-    runnable2.Run(); // <-- should not log anything
+	// Make sure we don't get crashes from deleting the native object.
+	PretendRunnable* pretendRunnable2 = new PretendRunnable;
+	Runnable runnable2 = *pretendRunnable2;
+	runnable2.Run();
+	delete pretendRunnable2;
+	runnable2.Run(); // <-- should not log anything
 
-    // -------------------------------------------------------------
-    // Performance
-    // -------------------------------------------------------------
+	// -------------------------------------------------------------
+	// Performance
+	// -------------------------------------------------------------
 	struct PerformanceRunnable : Runnable::Proxy
 	{
 		int i;
@@ -149,14 +149,14 @@ int main(int,char**)
 	for (int i = 0; i < 1024; ++i)
 		perfRunnable.Run();
 	gettimeofday(&stop, NULL);
-    printf("count: %d, time: %f ms.\n", perfRunner->i, (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
+	printf("count: %d, time: %f ms.\n", perfRunner->i, (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
 
-    delete perfRunner;
+	delete perfRunner;
 	gettimeofday(&start, NULL);
 	for (int i = 0; i < 1024; ++i)
 		perfRunnable.Run();
 	gettimeofday(&stop, NULL);
-    printf("count: %d, time: %f ms.\n", 1024, (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
+	printf("count: %d, time: %f ms.\n", 1024, (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
 
 	struct KillMePleazeRunnable : Runnable::Proxy
 	{
@@ -179,9 +179,9 @@ int main(int,char**)
 	java::lang::CharSequence string = "hello world";
 	printf("%s\n", static_cast<const char*>(string));
 
-    printf("%s\n", "EOP");
+	printf("%s\n", "EOP");
 
-    // print resolution of clock()
+	// print resolution of clock()
 	jni::DetachCurrentThread();
 
 	vm->DestroyJavaVM();
