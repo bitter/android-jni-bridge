@@ -1,1 +1,1 @@
-operator const char* ();
+//operator const char* ();
