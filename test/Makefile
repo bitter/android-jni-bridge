@@ -1,4 +1,4 @@
-JAVA_HOME ?= $(shell /usr/libexec/java_home)
+JAVA_HOME ?= $(shell /usr/libexec/java_home -v 1.7)
 
 OBJDIR    := build
 
