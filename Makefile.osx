@@ -1,5 +1,5 @@
 
-JAVA_HOME ?= $(shell /usr/libexec/java_home)
+JAVA_HOME ?= $(shell /usr/libexec/java_home -v 1.7)
 
 APINAME	= jdk
 APIJAR	= ${JAVA_HOME}/jre/lib/rt.jar
