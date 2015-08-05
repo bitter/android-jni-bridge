@@ -536,7 +536,7 @@ public class APIGenerator
 	private void declareProxyMembers(PrintStream out, Class clazz) throws Exception
 	{
 		out.format("\tprotected:\n");
-		out.format("\t\tvirtual jobject __Invoke(jmethodID, jobjectArray);\n");
+		out.format("\t\tvirtual ::jobject __Invoke(jmethodID, jobjectArray);\n");
 		for (Method method : clazz.getDeclaredMethods())
 		{
 			if (!isValid(method) || isStatic(method))
@@ -653,7 +653,7 @@ public class APIGenerator
 		out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
 		for (Class interfaze : clazz.getInterfaces())
 			out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
-		out.format("jobject %s::Proxy::__Invoke(jmethodID methodID, jobjectArray args) {\n", getSimpleName(clazz));
+		out.format("::jobject %s::Proxy::__Invoke(jmethodID methodID, jobjectArray args) {\n", getSimpleName(clazz));
 
 		int nMethods = 0;
 		Method[] methods = clazz.getDeclaredMethods();
@@ -682,7 +682,7 @@ public class APIGenerator
 			Class returnType = method.getReturnType();
 			Class[] params = method.getParameterTypes();
 			if (returnType != void.class)
-				out.format("\tif (methodIDs[%d] == methodID) { return static_cast< %s >(%s(%s)); }\n",
+				out.format("\tif (methodIDs[%d] == methodID) { return jni::NewLocalRef(static_cast< %s >(%s(%s))); }\n",
 					i++,
 					getClassName(box(returnType)),
 					getMethodName(method),

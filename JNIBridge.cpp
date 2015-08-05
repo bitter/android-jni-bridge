@@ -246,6 +246,16 @@ void FatalError(const char* str)
 	JNI_CALL(str, false, env->FatalError(str));
 }
 
+jobject NewLocalRef(jobject object)
+{
+	JNI_CALL_RETURN(jobject, object, true, env->NewLocalRef(object));
+}
+
+void DeleteLocalRef(jobject object)
+{
+	JNI_CALL(object, false, env->DeleteLocalRef(object));
+}
+
 jobject NewGlobalRef(jobject object)
 {
 	JNI_CALL_RETURN(jobject, object, true, env->NewGlobalRef(object));

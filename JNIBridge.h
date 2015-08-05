@@ -52,6 +52,8 @@ jint         Throw(jthrowable object);
 jint         ThrowNew(jclass exception, const char* message);
 void         FatalError(const char* str);
 
+jobject      NewLocalRef(jobject obj);
+void         DeleteLocalRef(jobject obj);
 jobject      NewGlobalRef(jobject obj);
 void         DeleteGlobalRef(jobject obj);
 jobject      NewWeakGlobalRef(jobject obj);
