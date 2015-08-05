@@ -9,6 +9,7 @@ my $api = "jdk-7";
 
 my @classes = (
 	'::java::lang::System',
+	'::java::lang::UnsupportedOperationException'
 );
 
 sub BuildOSX
@@ -17,7 +18,7 @@ sub BuildOSX
 	my $threads = 8;
 
     system("make clean") && die("Clean failed");
-    system("make -j$threads PLATFORM=darwin APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv7 library");
+    system("make -j$threads PLATFORM=darwin APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make osx library");
 }
 
 sub ZipIt
