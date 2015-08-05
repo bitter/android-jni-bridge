@@ -8,7 +8,7 @@ endif
 
 LIBNAME		= lib${APINAME}-jni.a
 
-ifdef (${JAVAHOME})
+ifdef JAVA_HOME
 	JAVA		= ${JAVA_HOME}/bin/java
 	JAVAC		= ${JAVA_HOME}/bin/javac
 else
