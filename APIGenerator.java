@@ -247,7 +247,7 @@ public class APIGenerator
 			return "jni";
 		String fullName = clazz.getName();
 		String simpleName = getSimpleName(clazz);
-		String packageName = fullName.substring(0, fullName.length() - simpleName.length() - 1);
+		String packageName = fullName.substring(0, Math.max(fullName.length() - simpleName.length() - 1, 0));
 		StringBuilder namespace = new StringBuilder("");
 		String[] namespaceComponents = packageName.split("\\.");
 		for (int i = 0; i < namespaceComponents.length; ++i)
