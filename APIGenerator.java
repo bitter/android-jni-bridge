@@ -74,6 +74,7 @@ public class APIGenerator
 		args.add("::java::lang::Double");
 		args.add("::java::lang::Character");
 		args.add("::java::lang::Boolean");
+		args.add("::java::lang::Class");
 
 		APIGenerator generator = new APIGenerator();
 		generator.collectDependencies(jars, args);

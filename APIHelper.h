@@ -149,14 +149,15 @@ template <typename T, typename AT>
 class PrimitiveArrayBase : public ArrayBase<AT>
 {
 protected:
-	explicit PrimitiveArrayBase(AT obj)                     : ArrayBase<AT>(obj) {};
-	explicit PrimitiveArrayBase(jobject obj)                : ArrayBase<AT>(obj) {};
-	explicit PrimitiveArrayBase(size_t length)              : ArrayBase<AT>(jni::Op<T>::NewArray(length)) {};
-	explicit PrimitiveArrayBase(size_t length, T* elements) : ArrayBase<AT>(jni::Op<T>::NewArray(length))
+	explicit PrimitiveArrayBase(AT obj)                      : ArrayBase<AT>(obj) {};
+	explicit PrimitiveArrayBase(jobject obj)                 : ArrayBase<AT>(obj) {};
+	explicit PrimitiveArrayBase(size_t length)               : ArrayBase<AT>(jni::Op<T>::NewArray(length)) {};
+	template<typename T2>
+	explicit PrimitiveArrayBase(size_t length, T2* elements) : ArrayBase<AT>(jni::Op<T>::NewArray(length))
 	{
 		T* array = jni::Op<T>::GetArrayElements(*this);
 		for (int i = 0; i < length; ++i)
-			array[i] = elements[i];
+			array[i] = static_cast<T>(elements[i]);
 		jni::Op<T>::ReleaseArrayElements(*this, array, 0);
 	};
 
@@ -187,10 +188,11 @@ protected:
 	explicit inline ObjectArray(jobject obj)                                  : ArrayBase<jobjectArray>(obj) {};
 	explicit inline ObjectArray(jobjectArray obj)                             : ArrayBase<jobjectArray>(obj) {};
 	explicit inline ObjectArray(jclass type, size_t length, T initialElement) : ArrayBase<jobjectArray>(jni::NewObjectArray(length, type, initialElement)) {};
-	explicit inline ObjectArray(jclass type, size_t length, T* elements)      : ArrayBase<jobjectArray>(jni::NewObjectArray(length, type, NULL))
+	template<typename T2>
+	explicit inline ObjectArray(jclass type, size_t length, T2* elements)     : ArrayBase<jobjectArray>(jni::NewObjectArray(length, type, NULL))
 	{
 		for (int i = 0; i < length; ++i)
-			jni::SetObjectArrayElement(*this, i, elements[i]);
+			jni::SetObjectArrayElement(*this, i, static_cast<T>(elements[i]));
 	}
 
 public:
@@ -218,17 +220,20 @@ public:
 	explicit inline Array(jobject obj)                         : ObjectArray<T>(obj) {};
 	explicit inline Array(jobjectArray obj)                    : ObjectArray<T>(obj) {};
 	explicit inline Array(size_t length, T initialElement = 0) : ObjectArray<T>(T::__CLASS, length, initialElement) {};
-	explicit inline Array(size_t length, T* elements)          : ObjectArray<T>(T::__CLASS, length, elements) {};
+	template<typename T2>
+	explicit inline Array(size_t length, T2* elements)         : ObjectArray<T>(T::__CLASS, length, elements) {};
 };
 
 template <>
 class Array<jobject> : public ObjectArray<jobject>
 {
 public:
-	explicit inline Array(jobject obj)                                            : ObjectArray<jobject>(obj) {};
-	explicit inline Array(jobjectArray obj)                                       : ObjectArray<jobject>(obj) {};
-	explicit inline Array(jclass type, size_t length, jobject initialElement = 0) : ObjectArray<jobject>(type, length, initialElement) {};
-	explicit inline Array(jclass type, size_t length, jobject* elements)          : ObjectArray<jobject>(type, length, elements) {};
+	explicit inline Array(jobject obj)                                      : ObjectArray<jobject>(obj) {};
+	explicit inline Array(jobjectArray obj)                                 : ObjectArray<jobject>(obj) {};
+	template<typename T>
+	explicit inline Array(jclass type, size_t length, T initialElement = 0) : ObjectArray<jobject>(type, length, initialElement) {};
+	template<typename T2>
+	explicit inline Array(jclass type, size_t length, T2* elements)         : ObjectArray<jobject>(type, length, elements) {};
 };
 
 #define DEF_PRIMITIVE_ARRAY_TYPE(t) \
@@ -236,10 +241,11 @@ template <> \
 class Array<t> : public PrimitiveArrayBase<t, t##Array> \
 { \
 public: \
-	explicit inline Array(jobject   obj)              : PrimitiveArrayBase<t, t##Array>(obj) {}; \
-	explicit inline Array(t##Array  obj)              : PrimitiveArrayBase<t, t##Array>(obj) {}; \
-	explicit inline Array(size_t length)              : PrimitiveArrayBase<t, t##Array>(length) {}; \
-	explicit inline Array(size_t length, t* elements) : PrimitiveArrayBase<t, t##Array>(length, elements) {}; \
+	explicit inline Array(jobject   obj)               : PrimitiveArrayBase<t, t##Array>(obj) {}; \
+	explicit inline Array(t##Array  obj)               : PrimitiveArrayBase<t, t##Array>(obj) {}; \
+	explicit inline Array(size_t length)               : PrimitiveArrayBase<t, t##Array>(length) {}; \
+	template<typename T2> \
+	explicit inline Array(size_t length, T2* elements) : PrimitiveArrayBase<t, t##Array>(length, elements) {}; \
 };
 
 DEF_PRIMITIVE_ARRAY_TYPE(jboolean)
