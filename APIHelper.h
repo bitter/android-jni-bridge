@@ -118,104 +118,14 @@ protected:
 	Ref<GlobalRefAllocator, jobject> m_Object;
 };
 
-// ------------------------------------------------
-// Proxy Support
-// ------------------------------------------------
-class ProxyInvoker
-{
-public:
-	ProxyInvoker() {}
-	virtual ~ProxyInvoker() {};
-	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
-
-public:
-	static bool __Register();
-
-protected:
-	virtual ::jobject __ProxyObject() const = 0;
-
-private:
-	ProxyInvoker(const ProxyInvoker& proxy);
-	ProxyInvoker& operator = (const ProxyInvoker& o);
-};
-
-template <typename RefAllocator>
-class ProxyObject : public virtual ProxyInvoker
-{
-protected:
-	ProxyObject(jni::Class& interfaze) : m_ProxyObject(NULL)
-	{
-	    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
-	    static jmethodID newProxyMID = jni::GetStaticMethodID(jniBridge, "newInterfaceProxy", "(JLjava/lang/Class;)Ljava/lang/Object;");
-	    if (newProxyMID) m_ProxyObject = jni::Op<jobject>::CallStaticMethod(jniBridge, newProxyMID, (jlong) this, static_cast<jclass>(interfaze));
-	}
-
-	ProxyObject(jni::Class& interfaze1, jni::Class& interfaze2) : m_ProxyObject(NULL)
-	{
-	    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
-	    static jmethodID newProxyMID = jni::GetStaticMethodID(jniBridge, "newInterfaceProxy", "(JLjava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;");
-	    if (newProxyMID)
-	    	m_ProxyObject = jni::Op<jobject>::CallStaticMethod(jniBridge, newProxyMID, (jlong) this,
-	    		static_cast<jclass>(interfaze1),
-	    		static_cast<jclass>(interfaze2));
-	}
-
-	~ProxyObject()
-	{
-	    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
-	    static jmethodID disableProxyMID = jni::GetStaticMethodID(jniBridge, "disableInterfaceProxy", "(Ljava/lang/Object;)V");
-	    if (disableProxyMID)
-	        jni::Op<jvoid>::CallStaticMethod(jniBridge, disableProxyMID, static_cast<jobject>(m_ProxyObject));
-	}
-
-	virtual ::jobject __ProxyObject() const { return m_ProxyObject; }
-
-private:
-	Ref<RefAllocator, jobject> m_ProxyObject;
-};
-
-// One interface
-template <class RefAllocator, class T1>
-class ProxyGenerator : public ProxyObject<RefAllocator>, public T1::__Proxy
-{
-protected:
-	ProxyGenerator() : ProxyObject<RefAllocator>(T1::__CLASS) {}
-
-public:
-	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
-	{
-		jobject value = NULL;
-		if (T1::__Proxy::__TryInvoke(mid, &value, args)) return value;
-		return value;
-	}
-
-};
-
-template <class T1> class Proxy     : public ProxyGenerator<GlobalRefAllocator, T1> {};
-template <class T1> class WeakProxy : public ProxyGenerator<WeakGlobalRefAllocator, T1> {};
-
-// Two interfaces
-template <class RefAllocator, class T1, class T2>
-class ProxyGenerator2 : public ProxyObject<RefAllocator>, public T1::__Proxy, public T2::__Proxy
-{
-protected:
-	ProxyGenerator2() : ProxyObject<RefAllocator>(T1::__CLASS, T2::__CLASS) {}
-
-public:
-	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
-	{
-		jobject value = NULL;
-		if (T1::__Proxy::__TryInvoke(mid, &value, args)) return value;
-		if (T2::__Proxy::__TryInvoke(mid, &value, args)) return value;
-		return value;
-	}
-
-};
-
-template <class T1, class T2> class Proxy2     : public ProxyGenerator2<GlobalRefAllocator, T1, T2> {};
-template <class T1, class T2> class WeakProxy2 : public ProxyGenerator2<WeakGlobalRefAllocator, T1, T2> {};
 
 // ------------------------------------------------
+// Utillities
+// ------------------------------------------------
+template <typename T> inline T Cast(jobject o) { return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0); }
+template <typename T> inline T ExceptionOccurred() { return T( ExceptionOccurred(T::CLASS)); }
+
+// ------------------------------------------------	
 // Array Support
 // ------------------------------------------------
 template <typename T>
@@ -259,7 +169,6 @@ public:
 	}
 };
 
-
 template <typename T>
 class Array : public ArrayBase<jobjectArray>
 {
@@ -285,6 +194,13 @@ public:
 	}
 };
 
+template <>
+class Array<jobject> : public PrimitiveArrayBase<jobject, jobjectArray>
+{
+public:
+	explicit inline Array(const jni::Class& type, size_t length, jobject* args) : PrimitiveArrayBase<jobject, jobjectArray>((jobjectArray) 0) {}   // TODO: FIX ME
+};
+
 #define DEF_PRIMITIVE_ARRAY_TYPE(t) \
 template <> \
 class Array<t> : public PrimitiveArrayBase<t, t##Array> \
@@ -306,16 +222,75 @@ DEF_PRIMITIVE_ARRAY_TYPE(jchar)
 
 #undef DEF_PRIMITIVE_ARRAY_TYPE
 
-template <typename T>
-inline T Cast(jobject o)
+// ------------------------------------------------
+// Proxy Support
+// ------------------------------------------------
+class ProxyInvoker
 {
-	return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0);
-}
+public:
+	ProxyInvoker() {}
+	virtual ~ProxyInvoker() {};
+	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
 
-template <typename T>
-inline T ExceptionOccurred()
+public:
+	static bool __Register();
+
+protected:
+	virtual ::jobject __ProxyObject() const = 0;
+
+private:
+	ProxyInvoker(const ProxyInvoker& proxy);
+	ProxyInvoker& operator = (const ProxyInvoker& o);
+};
+
+template <typename RefAllocator>
+class ProxyObject : public virtual ProxyInvoker
 {
-	return T(ExceptionOccurred(T::CLASS));
-}
+protected:
+	ProxyObject(const jobjectArray interfaces) : m_ProxyObject(NULL)
+	{
+		static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
+		static jmethodID newProxyMID = jni::GetStaticMethodID(jniBridge, "newInterfaceProxy", "(J[Ljava/lang/Class;)Ljava/lang/Object;");
+		if (!newProxyMID)
+			return;
+		m_ProxyObject = jni::Op<jobject>::CallStaticMethod(jniBridge, newProxyMID, (jlong) this, interfaces);
+	}
+
+	~ProxyObject()
+	{
+		static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
+		static jmethodID disableProxyMID = jni::GetStaticMethodID(jniBridge, "disableInterfaceProxy", "(Ljava/lang/Object;)V");
+		if (!disableProxyMID)
+			return;
+		jni::Op<jvoid>::CallStaticMethod(jniBridge, disableProxyMID, static_cast<jobject>(m_ProxyObject));
+	}
+
+	virtual ::jobject __ProxyObject() const { return m_ProxyObject; }
+
+private:
+	Ref<RefAllocator, jobject> m_ProxyObject;
+};
+
+template<typename... Args> inline void dummy(Args&&...) {}
+
+// One interface
+template <class RefAllocator, class ...TX>
+class ProxyGenerator : public ProxyObject<RefAllocator>, public TX::__Proxy...
+{
+protected:
+	ProxyGenerator() : ProxyObject<RefAllocator>(Array<jobject>(jni::Class("java/lang/Class"), sizeof...(TX), (jobject[]){TX::__CLASS...})) {}  // TODO: FIX ME
+
+public:
+	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
+	{
+		jobject result = NULL;
+		dummy(TX::__Proxy::__TryInvoke(mid, &result, args)...);
+		return result;
+	}
+
+};
+
+template <class ...TX> class Proxy     : public ProxyGenerator<GlobalRefAllocator, TX...> {};
+template <class ...TX> class WeakProxy : public ProxyGenerator<WeakGlobalRefAllocator, TX...> {};
 
 }

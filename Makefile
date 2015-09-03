@@ -19,7 +19,7 @@ endif
 JAVAFLAGS	= -XX:MaxPermSize=128M
 JAVACFLAGS  = -source 1.6 -target 1.6
 
-CPPFLAGS	+= -g0 -O2 -Wall -Werror -Wno-long-long
+CPPFLAGS	+= -g0 -O2 -Wall -Werror -Wno-long-long -std=c++11
 
 BUILDDIR	= build
 GENDIR		= ${BUILDDIR}/${APINAME}/source

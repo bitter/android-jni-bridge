@@ -186,7 +186,7 @@ int main(int,char**)
 	// Multiple Proxy Interface Test
 	// -------------------------------------------------------------
 	{
-		class MultipleInterfaces : public jni::WeakProxy2<Runnable, Iterator>
+		class MultipleInterfaces : public jni::WeakProxy<Runnable, Iterator>
 		{
 		public:
 			MultipleInterfaces()
