@@ -118,33 +118,106 @@ protected:
 	Ref<GlobalRefAllocator, jobject> m_Object;
 };
 
-enum ProxyReferenceType
+// ------------------------------------------------
+// Proxy Support
+// ------------------------------------------------
+class ProxyInvoker
 {
-	kProxyWeaklyReferenced,  // Native object will be automatically deleted when java object goes out of scope.
-	kProxyStronglyReferenced // Requires explicit deletion of the native object for the java object to be garbage collected.
-};
-
-class Proxy
-{
-protected:
-	Proxy(Class& interfaze, ProxyReferenceType refType);
-
 public:
-	virtual ~Proxy();
+	ProxyInvoker() {}
+	virtual ~ProxyInvoker() {};
 	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
 
 public:
 	static bool __Register();
 
-private:
-	Proxy(const Proxy& proxy);
-	Proxy& operator = (const Proxy& o);
-
 protected:
-	Ref<WeakGlobalRefAllocator, jobject> m_Object;
-	Ref<GlobalRefAllocator,     jobject> m_StrongRef;
+	virtual ::jobject __ProxyObject() const = 0;
+
+private:
+	ProxyInvoker(const ProxyInvoker& proxy);
+	ProxyInvoker& operator = (const ProxyInvoker& o);
 };
 
+template <typename RefAllocator>
+class ProxyObject : public virtual ProxyInvoker
+{
+protected:
+	ProxyObject(jni::Class& interfaze) : m_ProxyObject(NULL)
+	{
+	    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
+	    static jmethodID newProxyMID = jni::GetStaticMethodID(jniBridge, "newInterfaceProxy", "(JLjava/lang/Class;)Ljava/lang/Object;");
+	    if (newProxyMID) m_ProxyObject = jni::Op<jobject>::CallStaticMethod(jniBridge, newProxyMID, (jlong) this, static_cast<jclass>(interfaze));
+	}
+
+	ProxyObject(jni::Class& interfaze1, jni::Class& interfaze2) : m_ProxyObject(NULL)
+	{
+	    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
+	    static jmethodID newProxyMID = jni::GetStaticMethodID(jniBridge, "newInterfaceProxy", "(JLjava/lang/Class;Ljava/lang/Class;)Ljava/lang/Object;");
+	    if (newProxyMID)
+	    	m_ProxyObject = jni::Op<jobject>::CallStaticMethod(jniBridge, newProxyMID, (jlong) this,
+	    		static_cast<jclass>(interfaze1),
+	    		static_cast<jclass>(interfaze2));
+	}
+
+	~ProxyObject()
+	{
+	    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
+	    static jmethodID disableProxyMID = jni::GetStaticMethodID(jniBridge, "disableInterfaceProxy", "(Ljava/lang/Object;)V");
+	    if (disableProxyMID)
+	        jni::Op<jvoid>::CallStaticMethod(jniBridge, disableProxyMID, static_cast<jobject>(m_ProxyObject));
+	}
+
+	virtual ::jobject __ProxyObject() const { return m_ProxyObject; }
+
+private:
+	Ref<RefAllocator, jobject> m_ProxyObject;
+};
+
+// One interface
+template <class RefAllocator, class T1>
+class ProxyGenerator : public ProxyObject<RefAllocator>, public T1::__Proxy
+{
+protected:
+	ProxyGenerator() : ProxyObject<RefAllocator>(T1::__CLASS) {}
+
+public:
+	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
+	{
+		jobject value = NULL;
+		if (T1::__Proxy::__TryInvoke(mid, &value, args)) return value;
+		return value;
+	}
+
+};
+
+template <class T1> class Proxy     : public ProxyGenerator<GlobalRefAllocator, T1> {};
+template <class T1> class WeakProxy : public ProxyGenerator<WeakGlobalRefAllocator, T1> {};
+
+// Two interfaces
+template <class RefAllocator, class T1, class T2>
+class ProxyGenerator2 : public ProxyObject<RefAllocator>, public T1::__Proxy, public T2::__Proxy
+{
+protected:
+	ProxyGenerator2() : ProxyObject<RefAllocator>(T1::__CLASS, T2::__CLASS) {}
+
+public:
+	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
+	{
+		jobject value = NULL;
+		if (T1::__Proxy::__TryInvoke(mid, &value, args)) return value;
+		if (T2::__Proxy::__TryInvoke(mid, &value, args)) return value;
+		return value;
+	}
+
+};
+
+template <class T1, class T2> class Proxy2     : public ProxyGenerator2<GlobalRefAllocator, T1, T2> {};
+template <class T1, class T2> class WeakProxy2 : public ProxyGenerator2<WeakGlobalRefAllocator, T1, T2> {};
+
+// ------------------------------------------------
+// Array Support
+// ------------------------------------------------
 template <typename T>
 class ArrayBase
 {

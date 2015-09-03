@@ -9,7 +9,12 @@ public class JNIBridge
 
 	static Object newInterfaceProxy(final long ptr, final Class interfaze)
 	{
-		return Proxy.newProxyInstance(interfaze.getClassLoader(), new Class[] {interfaze}, new InterfaceProxy(ptr));
+		return Proxy.newProxyInstance(JNIBridge.class.getClassLoader(), new Class[] {interfaze}, new InterfaceProxy(ptr));
+	}
+
+	static Object newInterfaceProxy(final long ptr, final Class interfaze1, final Class interfaze2)
+	{
+		return Proxy.newProxyInstance(JNIBridge.class.getClassLoader(), new Class[] {interfaze1, interfaze2}, new InterfaceProxy(ptr));
 	}
 
 	static void disableInterfaceProxy(final Object proxy)
