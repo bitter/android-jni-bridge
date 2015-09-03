@@ -19,34 +19,17 @@ Class::~Class()
 JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jobject method, jobjectArray args)
 {
 	jmethodID methodID = env->FromReflectedMethod(method);
-	Proxy* proxy = (Proxy*)ptr;
+	ProxyInvoker* proxy = (ProxyInvoker*)ptr;
 	return proxy->__Invoke(methodID, args);
 }
 
 JNIEXPORT void JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_delete(JNIEnv* env, jobject thiz, jlong ptr)
 {
-	delete (Proxy*)ptr;
+	delete (ProxyInvoker*)ptr;
 }
 
-Proxy::Proxy(jni::Class& interfaze, jni::ProxyReferenceType refType) : m_Object(NULL), m_StrongRef(NULL)
-{
-    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
-    static jmethodID newProxyMID = jni::GetStaticMethodID(jniBridge, "newInterfaceProxy", "(JLjava/lang/Class;)Ljava/lang/Object;");
-    if (newProxyMID)
-        m_Object = jni::Op<jobject>::CallStaticMethod(jniBridge, newProxyMID, (jlong) this, static_cast<jclass>(interfaze));
-    if (refType == jni::kProxyStronglyReferenced)
-        m_StrongRef = (jobject)m_Object;
-}
 
-Proxy::~Proxy()
-{
-    static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
-    static jmethodID disableProxyMID = jni::GetStaticMethodID(jniBridge, "disableInterfaceProxy", "(Ljava/lang/Object;)V");
-    if (disableProxyMID)
-        jni::Op<jvoid>::CallStaticMethod(jniBridge, disableProxyMID, static_cast<jobject>(m_Object));
-}
-
-bool Proxy::__Register()
+bool ProxyInvoker::__Register()
 {
 	jni::LocalFrame frame;
 	jni::Class nativeProxyClass("bitter/jnibridge/JNIBridge");

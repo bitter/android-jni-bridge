@@ -37,7 +37,7 @@ sub ZipIt
 	system("cd build/$api && zip ../builds.zip -r darwin/*.a") && die("Failed to package libraries into zip file.");
 	system("cd build/temp && zip ../builds.zip -r jnibridge.jar build.txt include") && die("Failed to package headers into zip file.");
 	system("rm -r build/temp") && die("Unable to remove temp directory.");
-	system("cd test; unzip -o ../build/builds.zip") && die("Unable to prepare for tests");
+	system("cd test; unzip -o ../build/builds.zip; touch Test.cpp") && die("Unable to prepare for tests");
 }
 
 BuildOSX();

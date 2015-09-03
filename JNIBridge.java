@@ -7,9 +7,9 @@ public class JNIBridge
 	static native Object invoke(long ptr, Method method, Object[] args);
 	static native void   delete(long ptr);
 
-	static Object newInterfaceProxy(final long ptr, final Class interfaze)
+	static Object newInterfaceProxy(final long ptr, final Class[] interfaces)
 	{
-		return Proxy.newProxyInstance(interfaze.getClassLoader(), new Class[] {interfaze}, new InterfaceProxy(ptr));
+		return Proxy.newProxyInstance(JNIBridge.class.getClassLoader(), interfaces, new InterfaceProxy(ptr));
 	}
 
 	static void disableInterfaceProxy(final Object proxy)

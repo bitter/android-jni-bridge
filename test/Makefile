@@ -2,8 +2,8 @@ JAVA_HOME ?= $(shell /usr/libexec/java_home -v 1.7)
 
 OBJDIR    := build
 
-CPPFLAGS  := ${CPPFLAGS} -Iinclude -I${JAVA_HOME}/include -I${JAVA_HOME}/include/darwin
-CXXFLAGS  := ${CXXFLAGS} -fno-rtti -fno-exceptions
+CPPFLAGS  := ${CPPFLAGS} -Iinclude -I${JAVA_HOME}/include -I${JAVA_HOME}/include/darwin -std=c++11
+CXXFLAGS  := ${CXXFLAGS} -fno-rtti -fno-exceptions -g
 LDFLAGS   := ${LDFLAGS} -framework JavaVM -L${OBJDIR} -Ldarwin -ljdk-7-jni
 SRCS      := $(wildcard *.cpp)
 OBJS      := $(addprefix $(OBJDIR)/,$(SRCS:%.cpp=%.o))
