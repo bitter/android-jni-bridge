@@ -9,7 +9,7 @@ using namespace java::io;
 using namespace java::util;
 
 int main(int,char**)
-{	
+{
 	JavaVM* vm;
 	void* envPtr;
 	JavaVMInitArgs vm_args;
@@ -107,13 +107,58 @@ int main(int,char**)
 	gettimeofday(&stop, NULL);
 	printf("%f ms.\n", (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
 
+	// CharSequence test
+	java::lang::CharSequence string = "hello world";
+	printf("%s\n", static_cast<const char*>(string.ToString()));
+
+	// -------------------------------------------------------------
+	// Array Test
+	// -------------------------------------------------------------
+	{
+		jni::LocalFrame frame;
+		jni::Array<int> test01(4, (int[]){1, 2, 3, 4});
+		for (int i = 0; i < test01.Length(); ++i)
+			printf("ArrayTest01[%d],", test01[i]);
+		printf("\n");
+
+		jni::Array<java::lang::Integer> test02(4, (java::lang::Integer[]){1, 2, 3, 4});
+		for (int i = 0; i < test02.Length(); ++i)
+			printf("ArrayTest02[%d],", test02[i].IntValue());
+		printf("\n");
+
+		jni::Array<jobject> test03(java::lang::Integer::__CLASS, 4, (jobject[]){java::lang::Integer(1), java::lang::Integer(2), java::lang::Integer(3), java::lang::Integer(4)});
+		for (int i = 0; i < test03.Length(); ++i)
+			printf("ArrayTest03[%d],", java::lang::Integer(test03[i]).IntValue());
+		printf("\n");
+
+		jni::Array<jobject> test04(java::lang::Integer::__CLASS, 4, (java::lang::Integer[]){1, 2, 3, 4});
+		for (int i = 0; i < test04.Length(); ++i)
+			printf("ArrayTest04[%d],", java::lang::Integer(test04[i]).IntValue());
+		printf("\n");
+
+		jni::Array<int> test05(4, (java::lang::Integer[]){1, 2, 3, 4});
+		for (int i = 0; i < test05.Length(); ++i)
+			printf("ArrayTest05[%d],", test05[i]);
+		printf("\n");
+
+		jni::Array<java::lang::Integer> test10(4, 4733);
+		for (int i = 0; i < test10.Length(); ++i)
+			printf("ArrayTest10[%d],", test10[i].IntValue());
+		printf("\n");
+
+		jni::Array<jobject> test11(java::lang::Integer::__CLASS, 4, java::lang::Integer(4733));
+		for (int i = 0; i < test11.Length(); ++i)
+			printf("ArrayTest11[%d],", java::lang::Integer(test11[i]).IntValue());
+		printf("\n");
+	}
+
 	// -------------------------------------------------------------
 	// Proxy test
 	// -------------------------------------------------------------
-	if (!jni::Proxy::__Register())
+	if (!jni::ProxyInvoker::__Register())
 		printf("%s\n", jni::GetErrorMessage());
 
-	struct PretendRunnable : Runnable::Proxy
+	struct PretendRunnable : jni::Proxy<Runnable>
 	{
 		virtual void Run() {printf("%s\n", "hello world!!!!"); }
 	};
@@ -135,9 +180,9 @@ int main(int,char**)
 	runnable2.Run(); // <-- should not log anything
 
 	// -------------------------------------------------------------
-	// Performance
+	// Performance Proxy Test
 	// -------------------------------------------------------------
-	struct PerformanceRunnable : Runnable::Proxy
+	struct PerformanceRunnable : jni::Proxy<Runnable>
 	{
 		int i;
 		PerformanceRunnable() : i(0) {}
@@ -158,9 +203,11 @@ int main(int,char**)
 	gettimeofday(&stop, NULL);
 	printf("count: %d, time: %f ms.\n", 1024, (stop.tv_sec - start.tv_sec) * 1000.0 + (stop.tv_usec - start.tv_usec) / 1000.0);
 
-	struct KillMePleazeRunnable : Runnable::Proxy
+	// -------------------------------------------------------------
+	// Weak Proxy Test
+	// -------------------------------------------------------------
+	struct KillMePleazeRunnable : jni::WeakProxy<Runnable>
 	{
-		KillMePleazeRunnable() : Runnable::Proxy(jni::kProxyWeaklyReferenced) { }
 		virtual ~KillMePleazeRunnable() { printf("%s\n", "KillMePleazeRunnable");}
 		virtual void Run() { }
 	};
@@ -176,8 +223,75 @@ int main(int,char**)
 		System::Gc();
 	}
 
-	java::lang::CharSequence string = "hello world";
-	printf("%s\n", static_cast<const char*>(string));
+	// -------------------------------------------------------------
+	// Multiple Proxy Interface Test
+	// -------------------------------------------------------------
+	{
+		class MultipleInterfaces : public jni::WeakProxy<Runnable, Iterator>
+		{
+		public:
+			MultipleInterfaces()
+			: m_Count(10)
+			{
+
+			}
+
+			virtual ~MultipleInterfaces()
+			{
+				printf("destroyed[%p]\n", this);
+			}
+
+
+			virtual void Run()
+			{
+				printf("Run[%p]!\n", this);
+			}
+
+			virtual void Remove()
+			{
+				jni::ThrowNew(UnsupportedOperationException::__CLASS, "This iterator does not support remove.");
+			}
+
+			virtual ::jboolean HasNext()
+			{
+				printf("HasNext[%p]!\n", this);
+				bool result = (--m_Count != 0);
+				printf("m_Count[%d][%d]\n", m_Count, result);
+				return result;
+			}
+
+			virtual ::java::lang::Object Next()
+			{
+				return ::java::lang::String("this is a string");
+			}
+
+		private:
+			unsigned m_Count;
+		};
+
+		{
+			jni::LocalFrame frame;
+			MultipleInterfaces* testProxy = new MultipleInterfaces();
+
+			Runnable runnable = *testProxy;
+			runnable.Run();
+
+			Iterator iterator = *testProxy;
+			while (iterator.HasNext())
+			{
+				String javaString = jni::Cast<String>(iterator.Next());
+				printf("%s\n", static_cast<const char*>(javaString));
+			}
+		}
+		for (int i = 0; i < 32; ++i) // Do a couple of loops to massage the GC
+		{
+			jni::LocalFrame frame;
+			jni::Array<int> array(1024*1024);
+			System::Gc();
+		}
+
+		printf("%s", "end of multi interface test\n");
+	}
 
 	printf("%s\n", "EOP");
 

@@ -118,39 +118,24 @@ protected:
 	Ref<GlobalRefAllocator, jobject> m_Object;
 };
 
-enum ProxyReferenceType
-{
-	kProxyWeaklyReferenced,  // Native object will be automatically deleted when java object goes out of scope.
-	kProxyStronglyReferenced // Requires explicit deletion of the native object for the java object to be garbage collected.
-};
 
-class Proxy
-{
-protected:
-	Proxy(Class& interfaze, ProxyReferenceType refType);
+// ------------------------------------------------
+// Utillities
+// ------------------------------------------------
+template <typename T> inline T Cast(jobject o) { return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0); }
+template <typename T> inline T ExceptionOccurred() { return T( ExceptionOccurred(T::CLASS)); }
 
-public:
-	virtual ~Proxy();
-	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
-
-public:
-	static bool __Register();
-
-private:
-	Proxy(const Proxy& proxy);
-	Proxy& operator = (const Proxy& o);
-
-protected:
-	Ref<WeakGlobalRefAllocator, jobject> m_Object;
-	Ref<GlobalRefAllocator,     jobject> m_StrongRef;
-};
-
+// ------------------------------------------------	
+// Array Support
+// ------------------------------------------------
 template <typename T>
 class ArrayBase
 {
-public:
-	explicit ArrayBase(T obj) : m_Array(obj) {}
+protected:
+	explicit ArrayBase(T obj)       : m_Array(obj) {}
+	explicit ArrayBase(jobject obj) : m_Array(static_cast<T>(obj)) {}
 
+public:
 	inline size_t Length() const { return m_Array != 0 ? jni::GetArrayLength(m_Array) : 0; }
 
 	inline operator bool() const { return m_Array != 0; }
@@ -163,10 +148,20 @@ protected:
 template <typename T, typename AT>
 class PrimitiveArrayBase : public ArrayBase<AT>
 {
-public:
-	explicit PrimitiveArrayBase(AT        obj) : ArrayBase<AT>(obj) {};
-	explicit PrimitiveArrayBase(size_t length) : ArrayBase<AT>(jni::Op<T>::NewArray(length)) {};
+protected:
+	explicit PrimitiveArrayBase(AT obj)                      : ArrayBase<AT>(obj) {};
+	explicit PrimitiveArrayBase(jobject obj)                 : ArrayBase<AT>(obj) {};
+	explicit PrimitiveArrayBase(size_t length)               : ArrayBase<AT>(jni::Op<T>::NewArray(length)) {};
+	template<typename T2>
+	explicit PrimitiveArrayBase(size_t length, T2* elements) : ArrayBase<AT>(jni::Op<T>::NewArray(length))
+	{
+		T* array = jni::Op<T>::GetArrayElements(*this);
+		for (int i = 0; i < length; ++i)
+			array[i] = static_cast<T>(elements[i]);
+		jni::Op<T>::ReleaseArrayElements(*this, array, 0);
+	};
 
+public:
 	inline T operator[] (const int i)
 	{
 		T value = 0;
@@ -186,15 +181,21 @@ public:
 	}
 };
 
-
 template <typename T>
-class Array : public ArrayBase<jobjectArray>
+class ObjectArray : public ArrayBase<jobjectArray>
 {
-public:
-	explicit inline Array(jobject obj) : ArrayBase<jobjectArray>(static_cast<jobjectArray>(obj)) {};
-	explicit inline Array(jobjectArray obj) : ArrayBase<jobjectArray>(obj) {};
-	explicit inline Array(size_t length, T initialElement = 0) : ArrayBase<jobjectArray>(jni::NewObjectArray(length, T::__CLASS, initialElement)) {};
+protected:
+	explicit inline ObjectArray(jobject obj)                                  : ArrayBase<jobjectArray>(obj) {};
+	explicit inline ObjectArray(jobjectArray obj)                             : ArrayBase<jobjectArray>(obj) {};
+	explicit inline ObjectArray(jclass type, size_t length, T initialElement) : ArrayBase<jobjectArray>(jni::NewObjectArray(length, type, initialElement)) {};
+	template<typename T2>
+	explicit inline ObjectArray(jclass type, size_t length, T2* elements)     : ArrayBase<jobjectArray>(jni::NewObjectArray(length, type, NULL))
+	{
+		for (int i = 0; i < length; ++i)
+			jni::SetObjectArrayElement(*this, i, static_cast<T>(elements[i]));
+	}
 
+public:
 	inline T operator[] (const int i) { return T(*this ? jni::GetObjectArrayElement(*this, i) : 0); }
 
 	inline T* Lock()
@@ -212,14 +213,39 @@ public:
 	}
 };
 
+template <typename T>
+class Array : public ObjectArray<T>
+{
+public:
+	explicit inline Array(jobject obj)                         : ObjectArray<T>(obj) {};
+	explicit inline Array(jobjectArray obj)                    : ObjectArray<T>(obj) {};
+	explicit inline Array(size_t length, T initialElement = 0) : ObjectArray<T>(T::__CLASS, length, initialElement) {};
+	template<typename T2>
+	explicit inline Array(size_t length, T2* elements)         : ObjectArray<T>(T::__CLASS, length, elements) {};
+};
+
+template <>
+class Array<jobject> : public ObjectArray<jobject>
+{
+public:
+	explicit inline Array(jobject obj)                                      : ObjectArray<jobject>(obj) {};
+	explicit inline Array(jobjectArray obj)                                 : ObjectArray<jobject>(obj) {};
+	template<typename T>
+	explicit inline Array(jclass type, size_t length, T initialElement = 0) : ObjectArray<jobject>(type, length, initialElement) {};
+	template<typename T2>
+	explicit inline Array(jclass type, size_t length, T2* elements)         : ObjectArray<jobject>(type, length, elements) {};
+};
+
 #define DEF_PRIMITIVE_ARRAY_TYPE(t) \
 template <> \
 class Array<t> : public PrimitiveArrayBase<t, t##Array> \
 { \
 public: \
-	explicit inline Array(jobject   obj) : PrimitiveArrayBase<t, t##Array>(static_cast<t##Array>(obj)) {}; \
-	explicit inline Array(t##Array  obj) : PrimitiveArrayBase<t, t##Array>(obj) {}; \
-	explicit inline Array(size_t length) : PrimitiveArrayBase<t, t##Array>(jni::Op<t>::NewArray(length)) {}; \
+	explicit inline Array(jobject   obj)               : PrimitiveArrayBase<t, t##Array>(obj) {}; \
+	explicit inline Array(t##Array  obj)               : PrimitiveArrayBase<t, t##Array>(obj) {}; \
+	explicit inline Array(size_t length)               : PrimitiveArrayBase<t, t##Array>(length) {}; \
+	template<typename T2> \
+	explicit inline Array(size_t length, T2* elements) : PrimitiveArrayBase<t, t##Array>(length, elements) {}; \
 };
 
 DEF_PRIMITIVE_ARRAY_TYPE(jboolean)
@@ -233,16 +259,93 @@ DEF_PRIMITIVE_ARRAY_TYPE(jchar)
 
 #undef DEF_PRIMITIVE_ARRAY_TYPE
 
-template <typename T>
-inline T Cast(jobject o)
+// ------------------------------------------------
+// Proxy Support
+// ------------------------------------------------
+namespace ProxyDependencies
 {
-	return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0);
+	static inline jni::Class& JNIBridge()
+	{
+		static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
+		return jniBridge;
+	}
+
+	static inline jni::Class& JavaLangClass()
+	{
+		static jni::Class jniBridge("java/lang/Class");
+		return jniBridge;
+	}
+
+	static inline jmethodID NewProxyMethodID()
+	{
+		static jmethodID newProxyMID = jni::GetStaticMethodID(JNIBridge(), "newInterfaceProxy", "(J[Ljava/lang/Class;)Ljava/lang/Object;");
+		return newProxyMID;
+	}
+
+	static inline jmethodID DisableProxyMethodID()
+	{
+		static jmethodID disableProxyMID = jni::GetStaticMethodID(JNIBridge(), "disableInterfaceProxy", "(Ljava/lang/Object;)V");
+		return disableProxyMID;
+	}
 }
 
-template <typename T>
-inline T ExceptionOccurred()
+class ProxyInvoker
 {
-	return T(ExceptionOccurred(T::CLASS));
-}
+public:
+	ProxyInvoker() {}
+	virtual ~ProxyInvoker() {};
+	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
+
+public:
+	static bool __Register();
+
+protected:
+	virtual ::jobject __ProxyObject() const = 0;
+
+private:
+	ProxyInvoker(const ProxyInvoker& proxy);
+	ProxyInvoker& operator = (const ProxyInvoker& o);
+};
+
+template <typename RefAllocator>
+class ProxyObject : public virtual ProxyInvoker
+{
+protected:
+	ProxyObject(const jobjectArray interfaces) : m_ProxyObject(NULL)
+	{
+		m_ProxyObject = jni::Op<jobject>::CallStaticMethod(ProxyDependencies::JNIBridge(), ProxyDependencies::NewProxyMethodID(), (jlong) this, interfaces);
+	}
+
+	~ProxyObject()
+	{
+		jni::Op<jvoid>::CallStaticMethod(ProxyDependencies::JNIBridge(), ProxyDependencies::DisableProxyMethodID(), static_cast<jobject>(m_ProxyObject));
+	}
+
+	virtual ::jobject __ProxyObject() const { return m_ProxyObject; }
+
+private:
+	Ref<RefAllocator, jobject> m_ProxyObject;
+};
+
+template<typename... Args> inline void dummy(Args&&...) {}
+
+// One interface
+template <class RefAllocator, class ...TX>
+class ProxyGenerator : public ProxyObject<RefAllocator>, public TX::__Proxy...
+{
+protected:
+	ProxyGenerator() : ProxyObject<RefAllocator>(Array<jobject>(ProxyDependencies::JavaLangClass(), sizeof...(TX), (jobject[]){TX::__CLASS...})) {}
+
+public:
+	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
+	{
+		jobject result = NULL;
+		dummy(TX::__Proxy::__TryInvoke(mid, &result, args)...);
+		return result;
+	}
+};
+
+template <class ...TX> class Proxy     : public ProxyGenerator<GlobalRefAllocator, TX...> {};
+template <class ...TX> class WeakProxy : public ProxyGenerator<WeakGlobalRefAllocator, TX...> {};
 
 }

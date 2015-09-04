@@ -74,6 +74,7 @@ public class APIGenerator
 		args.add("::java::lang::Double");
 		args.add("::java::lang::Character");
 		args.add("::java::lang::Boolean");
+		args.add("::java::lang::Class");
 
 		APIGenerator generator = new APIGenerator();
 		generator.collectDependencies(jars, args);
@@ -247,7 +248,7 @@ public class APIGenerator
 			return "jni";
 		String fullName = clazz.getName();
 		String simpleName = getSimpleName(clazz);
-		String packageName = fullName.substring(0, fullName.length() - simpleName.length() - 1);
+		String packageName = fullName.substring(0, Math.max(fullName.length() - simpleName.length() - 1, 0));
 		StringBuilder namespace = new StringBuilder("");
 		String[] namespaceComponents = packageName.split("\\.");
 		for (int i = 0; i < namespaceComponents.length; ++i)
@@ -523,7 +524,7 @@ public class APIGenerator
 
 	private void declareProxy(PrintStream header, Class clazz) throws Exception
 	{
-		header.format("\tstruct Proxy : private jni::Proxy\n");
+		header.format("\tstruct __Proxy : public virtual jni::ProxyInvoker\n");
 		header.format("\t{\n");
 		header.format("\t\toperator %s();\n", getClassName(clazz));
 		// Use cast operators for interfaces to avoid deadly diamond of death
@@ -536,7 +537,7 @@ public class APIGenerator
 	private void declareProxyMembers(PrintStream out, Class clazz) throws Exception
 	{
 		out.format("\tprotected:\n");
-		out.format("\t\tvirtual jobject __Invoke(jmethodID, jobjectArray);\n");
+		out.format("\t\tbool __TryInvoke(jmethodID, jobject*, jobjectArray);\n");
 		for (Method method : clazz.getDeclaredMethods())
 		{
 			if (!isValid(method) || isStatic(method))
@@ -546,7 +547,6 @@ public class APIGenerator
 				getMethodName(method),
 				getParameterSignature(method.getParameterTypes()));
 		}
-		out.format("\t\tProxy(jni::ProxyReferenceType refType = jni::kProxyStronglyReferenced);\n");
 	}
 
 	private void declareClassMembers(PrintStream out, Class clazz) throws Exception
@@ -649,11 +649,10 @@ public class APIGenerator
 
 	private void implementProxy(PrintStream out, Class clazz) throws Exception
 	{
-		out.format("%s::Proxy::Proxy(jni::ProxyReferenceType refType) : jni::Proxy(%s::__CLASS, refType) {}\n", getSimpleName(clazz), getSimpleName(clazz));
-		out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
+		out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
 		for (Class interfaze : clazz.getInterfaces())
-			out.format("%s::Proxy::operator %s() { return %s(static_cast<jobject>(m_Object)); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
-		out.format("jobject %s::Proxy::__Invoke(jmethodID methodID, jobjectArray args) {\n", getSimpleName(clazz));
+			out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
+		out.format("bool %s::__Proxy::__TryInvoke(jmethodID methodID, jobject* object, jobjectArray args) {\n", getSimpleName(clazz));
 
 		int nMethods = 0;
 		Method[] methods = clazz.getDeclaredMethods();
@@ -664,7 +663,7 @@ public class APIGenerator
 			++nMethods;
 		}
 
-		if (nMethods == 0) { out.format("\treturn 0;\n}"); return; }
+		if (nMethods == 0) { out.format("\treturn false;\n}"); return; }
 
 		out.format("\tstatic jmethodID methodIDs[] = {\n");
 		for (Method method : methods)
@@ -682,19 +681,19 @@ public class APIGenerator
 			Class returnType = method.getReturnType();
 			Class[] params = method.getParameterTypes();
 			if (returnType != void.class)
-				out.format("\tif (methodIDs[%d] == methodID) { return static_cast< %s >(%s(%s)); }\n",
+				out.format("\tif (methodIDs[%d] == methodID) { *object = jni::NewLocalRef(static_cast< %s >(%s(%s))); return true; }\n",
 					i++,
 					getClassName(box(returnType)),
 					getMethodName(method),
 					getParametersFromJNIObjectArray(params));
 			else
-				out.format("\tif (methodIDs[%d] == methodID) { %s(%s); return 0; }\n",
+				out.format("\tif (methodIDs[%d] == methodID) { *object = NULL; %s(%s); return true; }\n",
 					i++,
 					getMethodName(method),
 					getParametersFromJNIObjectArray(params));
 		}
 		// put warning here?
-		out.format("\treturn 0;\n}");
+		out.format("\treturn false;\n}");
 	}
 
 	private void implementClassMembers(PrintStream out, Class clazz) throws Exception
