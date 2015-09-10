@@ -123,7 +123,8 @@ protected:
 // Utillities
 // ------------------------------------------------
 template <typename T> inline T Cast(jobject o) { return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0); }
-template <typename T> inline T ExceptionOccurred() { return T( ExceptionOccurred(T::CLASS)); }
+template <typename T> inline bool Catch() { return jni::ExceptionThrown(T::__CLASS); }
+template <typename T> inline bool ThrownNew(const char* message) { return jni::ThrownNew(T::__CLASS, message) == 0; }
 
 // ------------------------------------------------	
 // Array Support
@@ -276,6 +277,12 @@ namespace ProxyDependencies
 		return jniBridge;
 	}
 
+	static inline jni::Class& NoSuchMethodError()
+	{
+		static jni::Class jniBridge("java/lang/NoSuchMethodError");
+		return jniBridge;
+	}
+
 	static inline jmethodID NewProxyMethodID()
 	{
 		static jmethodID newProxyMID = jni::GetStaticMethodID(JNIBridge(), "newInterfaceProxy", "(J[Ljava/lang/Class;)Ljava/lang/Object;");
@@ -341,6 +348,8 @@ public:
 	{
 		jobject result = NULL; bool success = false;
 		dummy(TX::__Proxy::__TryInvoke(mid, &success, &result, args)...);
+		if (!success)
+			jni::ThrowNew(ProxyDependencies::NoSuchMethodError(), "<unknown>");
 		return result;
 	}
 };
