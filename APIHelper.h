@@ -339,8 +339,8 @@ protected:
 public:
 	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
 	{
-		jobject result = NULL;
-		dummy(TX::__Proxy::__TryInvoke(mid, &result, args)...);
+		jobject result = NULL; bool success = false;
+		dummy(TX::__Proxy::__TryInvoke(mid, &success, &result, args)...);
 		return result;
 	}
 };
