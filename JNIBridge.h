@@ -61,11 +61,14 @@ void         DeleteWeakGlobalRef(jobject obj);
 
 jclass       GetObjectClass(jobject object);
 jboolean     IsInstanceOf(jobject object, jclass clazz);
+jboolean     IsSameObject(jobject object1, jobject object2);
 
 jmethodID    GetMethodID(jclass clazz, const char* name, const char* signature);
 jfieldID     GetFieldID(jclass clazz, const char* name, const char* signature);
 jmethodID    GetStaticMethodID(jclass clazz, const char* name, const char* signature);
 jfieldID     GetStaticFieldID(jclass clazz, const char* name, const char* signature);
+
+jobject      ToReflectedMethod(jclass clazz, jmethodID methodID, bool isStatic);
 
 jobject		 NewObject(jclass clazz, jmethodID methodID, ...);
 

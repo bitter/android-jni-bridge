@@ -286,6 +286,11 @@ jboolean IsInstanceOf(jobject object, jclass clazz)
 	JNI_CALL_RETURN(jboolean, object && clazz, true, env->IsInstanceOf(object, clazz));
 }
 
+jboolean IsSameObject(jobject object1, jobject object2)
+{
+	JNI_CALL_RETURN(jboolean, object1 && object2, true, env->IsSameObject(object1, object2));
+}
+
 jmethodID GetMethodID(jclass clazz, const char* name, const char* signature)
 {
 	JNI_CALL_RETURN(jmethodID, clazz && name && signature, true, env->GetMethodID(clazz, name, signature));
@@ -304,6 +309,11 @@ jmethodID GetStaticMethodID(jclass clazz, const char* name, const char* signatur
 jfieldID GetStaticFieldID(jclass clazz, const char* name, const char* signature)
 {
 	JNI_CALL_RETURN(jfieldID, clazz && name && signature, true, env->GetStaticFieldID(clazz, name, signature));
+}
+
+jobject ToReflectedMethod(jclass clazz, jmethodID methodID, bool isStatic)
+{
+	JNI_CALL_RETURN(jobject, clazz && methodID, true, env->ToReflectedMethod(clazz, methodID, isStatic));
 }
 
 jobject NewObject(jclass clazz, jmethodID methodID, ...)
