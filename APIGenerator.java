@@ -539,7 +539,7 @@ public class APIGenerator
 	private void declareProxyMembers(PrintStream out, Class clazz) throws Exception
 	{
 		out.format("\tprotected:\n");
-		out.format("\t\tbool __TryInvoke(jmethodID, jobjectArray, bool*, jobject*);\n");
+		out.format("\t\tbool __TryInvoke(jclass, jmethodID, jobjectArray, bool*, jobject*);\n");
 		for (Method method : clazz.getDeclaredMethods())
 		{
 			if (!isValid(method) || isStatic(method))
@@ -654,7 +654,7 @@ public class APIGenerator
 		out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
 		for (Class interfaze : clazz.getInterfaces())
 			out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
-		out.format("bool %s::__Proxy::__TryInvoke(jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
+		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
 
 		int nMethods = 0;
 		Method[] methods = clazz.getDeclaredMethods();
@@ -670,6 +670,8 @@ public class APIGenerator
 
 		// return if success was already achieved
 		out.format("\tif (*success)\n\t\treturn false;\n\n");
+
+		out.format("\tif (!jni::IsSameObject(clazz, %s::__CLASS))\n\t\treturn false;\n\n", getSimpleName(clazz));
 
 		out.format("\tstatic jmethodID methodIDs[] = {\n");
 		for (Method method : methods)

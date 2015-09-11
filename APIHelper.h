@@ -269,7 +269,7 @@ class ProxyInvoker
 public:
 	ProxyInvoker() {}
 	virtual ~ProxyInvoker() {};
-	virtual jobject __Invoke(jmethodID, jobjectArray) = 0; /// <-- don't we need the class too?
+	virtual jobject __Invoke(jclass, jmethodID, jobjectArray) = 0;
 
 public:
 	static bool __Register();

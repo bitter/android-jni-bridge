@@ -4,7 +4,7 @@ import java.lang.reflect.*;
 
 public class JNIBridge
 {
-	static native Object invoke(long ptr, Method method, Object[] args);
+	static native Object invoke(long ptr, Class clazz, Method method, Object[] args);
 	static native void   delete(long ptr);
 
 	static Object newInterfaceProxy(final long ptr, final Class[] interfaces)
@@ -30,7 +30,7 @@ public class JNIBridge
 			{
 				if (m_Ptr == 0)
 					return null;
-				return JNIBridge.invoke(m_Ptr, method, args);
+				return JNIBridge.invoke(m_Ptr, method.getDeclaringClass(), method, args);
 			}
 		}
 

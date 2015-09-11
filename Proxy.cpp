@@ -5,11 +5,11 @@ namespace jni
 
 jni::Class s_JNIBridgeClass("bitter/jnibridge/JNIBridge");
 
-JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jobject method, jobjectArray args)
+JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jclass clazz, jobject method, jobjectArray args)
 {
 	jmethodID methodID = env->FromReflectedMethod(method);
 	ProxyInvoker* proxy = (ProxyInvoker*)ptr;
-	return proxy->__Invoke(methodID, args);
+	return proxy->__Invoke(clazz, methodID, args);
 }
 
 JNIEXPORT void JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_delete(JNIEnv* env, jobject thiz, jlong ptr)
@@ -22,7 +22,7 @@ bool ProxyInvoker::__Register()
 	jni::LocalFrame frame;
 	jni::Class nativeProxyClass("bitter/jnibridge/JNIBridge");
 	char invokeMethodName[] = "invoke";
-	char invokeMethodSignature[] = "(JLjava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
+	char invokeMethodSignature[] = "(JLjava/lang/Class;Ljava/lang/reflect/Method;[Ljava/lang/Object;)Ljava/lang/Object;";
 	char deleteMethodName[] = "delete";
 	char deleteMethodSignature[] = "(J)V";
 
@@ -50,20 +50,25 @@ java::lang::String ProxyObject::ToString() const
 	return java::lang::String("<native proxy object>");
 }
 
-jobject ProxyObject::__Invoke(jmethodID mid, jobjectArray args)
+jobject ProxyObject::__Invoke(jclass clazz, jmethodID mid, jobjectArray args)
 {
 	jobject result;
-	if (!__InvokeInternal(mid, args, &result))
+	if (!__InvokeInternal(clazz, mid, args, &result))
 	{
-		jni::ThrowNew<java::lang::NoSuchMethodError>("<no such native function>");
+		java::lang::reflect::Method method(jni::ToReflectedMethod(clazz, mid, false));
+		jni::ThrowNew<java::lang::NoSuchMethodError>(method.ToString());
 	}
 
 	return result;
 }
 
-bool ProxyObject::__TryInvoke(jmethodID methodID, jobjectArray args, bool* success, jobject* result)
+bool ProxyObject::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result)
 {
 	if (*success)
+		return false;
+
+	// in case jmethodIDs are not unique across classes - couldn't find any spec regarding this
+	if (!jni::IsSameObject(clazz, java::lang::Object::__CLASS))
 		return false;
 
 	static jmethodID methodIDs[] = {
