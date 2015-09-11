@@ -293,6 +293,24 @@ int main(int,char**)
 		printf("%s", "end of multi interface test\n");
 	}
 
+	// -------------------------------------------------------------
+	// Proxy Object Test
+	// -------------------------------------------------------------
+	{
+		jni::LocalFrame frame;
+		struct PretendRunnable : jni::Proxy<Runnable>
+		{
+			virtual void Run() {printf("%s\n", "hello world!!!!"); }
+		};
+
+		PretendRunnable pretendRunnable;
+		Runnable runnable = pretendRunnable;
+
+		printf("equals: %d\n", runnable.Equals(runnable));
+		printf("hashcode: %d\n", runnable.HashCode());
+		printf("toString: %s\n", static_cast<const char*>(runnable.ToString()));
+	}
+
 	printf("%s\n", "EOP");
 
 	// print resolution of clock()

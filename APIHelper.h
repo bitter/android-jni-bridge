@@ -1,4 +1,5 @@
 #pragma once
+
 #include "JNIBridge.h"
 
 namespace jni
@@ -124,7 +125,7 @@ protected:
 // ------------------------------------------------
 template <typename T> inline T Cast(jobject o) { return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0); }
 template <typename T> inline bool Catch() { return jni::ExceptionThrown(T::__CLASS); }
-template <typename T> inline bool ThrownNew(const char* message) { return jni::ThrownNew(T::__CLASS, message) == 0; }
+template <typename T> inline bool ThrowNew(const char* message) { return jni::ThrowNew(T::__CLASS, message) == 0; }
 
 // ------------------------------------------------	
 // Array Support
@@ -263,45 +264,12 @@ DEF_PRIMITIVE_ARRAY_TYPE(jchar)
 // ------------------------------------------------
 // Proxy Support
 // ------------------------------------------------
-namespace ProxyDependencies
-{
-	static inline jni::Class& JNIBridge()
-	{
-		static jni::Class jniBridge("bitter/jnibridge/JNIBridge");
-		return jniBridge;
-	}
-
-	static inline jni::Class& JavaLangClass()
-	{
-		static jni::Class jniBridge("java/lang/Class");
-		return jniBridge;
-	}
-
-	static inline jni::Class& NoSuchMethodError()
-	{
-		static jni::Class jniBridge("java/lang/NoSuchMethodError");
-		return jniBridge;
-	}
-
-	static inline jmethodID NewProxyMethodID()
-	{
-		static jmethodID newProxyMID = jni::GetStaticMethodID(JNIBridge(), "newInterfaceProxy", "(J[Ljava/lang/Class;)Ljava/lang/Object;");
-		return newProxyMID;
-	}
-
-	static inline jmethodID DisableProxyMethodID()
-	{
-		static jmethodID disableProxyMID = jni::GetStaticMethodID(JNIBridge(), "disableInterfaceProxy", "(Ljava/lang/Object;)V");
-		return disableProxyMID;
-	}
-}
-
 class ProxyInvoker
 {
 public:
 	ProxyInvoker() {}
 	virtual ~ProxyInvoker() {};
-	virtual jobject __Invoke(jmethodID, jobjectArray) = 0;
+	virtual jobject __Invoke(jmethodID, jobjectArray) = 0; /// <-- don't we need the class too?
 
 public:
 	static bool __Register();
@@ -314,44 +282,50 @@ private:
 	ProxyInvoker& operator = (const ProxyInvoker& o);
 };
 
-template <typename RefAllocator>
 class ProxyObject : public virtual ProxyInvoker
 {
-protected:
-	ProxyObject(const jobjectArray interfaces) : m_ProxyObject(NULL)
-	{
-		m_ProxyObject = jni::Op<jobject>::CallStaticMethod(ProxyDependencies::JNIBridge(), ProxyDependencies::NewProxyMethodID(), (jlong) this, interfaces);
-	}
+// Dispatch invoke calls
+public:
+	virtual bool __Invoke(jmethodID mid, jobjectArray args, jobject* result) = 0;
+	virtual jobject __Invoke(jmethodID mid, jobjectArray args);
 
-	~ProxyObject()
+// These functions are special and always forwarded
+protected:
+	virtual ::jint HashCode() const;
+	virtual ::jboolean Equals(const ::jobject arg0) const;
+	virtual ::jstring ToString() const; /// <-- need to fix this one - can't leave it like that
+
+	bool __TryInvoke(jmethodID methodID, jobjectArray args, bool* success, jobject* result);
+
+// Factory stuff
+protected:
+	static jobject NewInstance(void* nativePtr, const jobject* interfaces, size_t interfaces_len);
+	static void    DisableInstance(jobject proxy);
+};
+
+template <class RefAllocator, class ...TX>
+class ProxyGenerator : public ProxyObject, public TX::__Proxy...
+{
+protected:
+	ProxyGenerator() : m_ProxyObject(NewInstance(this, (jobject[]){TX::__CLASS...}, sizeof...(TX)))	{ }
+
+	virtual ~ProxyGenerator()
 	{
-		jni::Op<jvoid>::CallStaticMethod(ProxyDependencies::JNIBridge(), ProxyDependencies::DisableProxyMethodID(), static_cast<jobject>(m_ProxyObject));
+		DisableInstance(__ProxyObject());
 	}
 
 	virtual ::jobject __ProxyObject() const { return m_ProxyObject; }
 
 private:
-	Ref<RefAllocator, jobject> m_ProxyObject;
-};
-
-template<typename... Args> inline void dummy(Args&&...) {}
-
-// One interface
-template <class RefAllocator, class ...TX>
-class ProxyGenerator : public ProxyObject<RefAllocator>, public TX::__Proxy...
-{
-protected:
-	ProxyGenerator() : ProxyObject<RefAllocator>(Array<jobject>(ProxyDependencies::JavaLangClass(), sizeof...(TX), (jobject[]){TX::__CLASS...})) {}
-
-public:
-	virtual jobject __Invoke(jmethodID mid, jobjectArray args)
+	template<typename... Args> inline void DummyInvoke(Args&&...) {}
+	virtual bool __Invoke(jmethodID mid, jobjectArray args, jobject* result)
 	{
-		jobject result = NULL; bool success = false;
-		dummy(TX::__Proxy::__TryInvoke(mid, &success, &result, args)...);
-		if (!success)
-			jni::ThrowNew(ProxyDependencies::NoSuchMethodError(), "<unknown>");
-		return result;
+		bool success = false;
+		DummyInvoke(ProxyObject::__TryInvoke(mid, args, &success, result), TX::__Proxy::__TryInvoke(mid, args, &success, result)...);
+		return success;
 	}
+
+	Ref<RefAllocator, jobject> m_ProxyObject;
 };
 
 template <class ...TX> class Proxy     : public ProxyGenerator<GlobalRefAllocator, TX...> {};

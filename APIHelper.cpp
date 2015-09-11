@@ -1,4 +1,4 @@
-#include "APIHelper.h"
+#include "API.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,6 +17,11 @@ Class::~Class()
 	free(m_ClassName);
 }
 
+// ------------------------------------------------
+// Proxy Support
+// ------------------------------------------------
+jni::Class s_JNIBridgeClass("bitter/jnibridge/JNIBridge");
+
 JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jobject method, jobjectArray args)
 {
 	jmethodID methodID = env->FromReflectedMethod(method);
@@ -28,7 +33,6 @@ JNIEXPORT void JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_delet
 {
 	delete (ProxyInvoker*)ptr;
 }
-
 
 bool ProxyInvoker::__Register()
 {
@@ -48,6 +52,63 @@ bool ProxyInvoker::__Register()
 	return !jni::CheckError();
 }
 
+::jint ProxyObject::HashCode() const
+{
+	return java::lang::System::IdentityHashCode(java::lang::Object(__ProxyObject()));
+}
+
+::jboolean ProxyObject::Equals(const ::jobject arg0) const
+{
+	return jni::IsSameObject(__ProxyObject(), arg0);
+}
+
+::jstring ProxyObject::ToString() const
+{
+	static java::lang::String str("<native proxy object>");
+	return str;
+}
+
+jobject ProxyObject::__Invoke(jmethodID mid, jobjectArray args)
+{
+	jobject result;
+	if (!__Invoke(mid, args, &result))
+	{
+		jni::ThrowNew<java::lang::NoSuchMethodError>("<no such native function>");
+	}
+
+	return result;
+}
+
+bool ProxyObject::__TryInvoke(jmethodID methodID, jobjectArray args, bool* success, jobject* result)
+{
+	if (*success)
+		return false;
+
+	static jmethodID methodIDs[] = {
+		jni::GetMethodID(java::lang::Object::__CLASS, "hashCode", "()I"),
+		jni::GetMethodID(java::lang::Object::__CLASS, "equals", "(Ljava/lang/Object;)Z"),
+		jni::GetMethodID(java::lang::Object::__CLASS, "toString", "()Ljava/lang/String;")
+	};
+	if (methodIDs[0] == methodID) { *result = jni::NewLocalRef(static_cast<java::lang::Integer>(HashCode())); *success = true; return true; }
+	if (methodIDs[1] == methodID) { *result = jni::NewLocalRef(static_cast<java::lang::Boolean>(Equals(::java::lang::Object(jni::GetObjectArrayElement(args, 0))))); *success = true; return true; }
+	if (methodIDs[2] == methodID) {	*result = jni::NewLocalRef(static_cast<java::lang::String>(ToString())); *success = true;	return true; }
+
+	return false;
+}
+
+jobject ProxyObject::NewInstance(void* nativePtr, const jobject* interfaces, size_t interfaces_len)
+{
+	Array<jobject> interfaceArray(java::lang::Class::__CLASS, interfaces_len, interfaces);
+
+	static jmethodID newProxyMID = jni::GetStaticMethodID(s_JNIBridgeClass, "newInterfaceProxy", "(J[Ljava/lang/Class;)Ljava/lang/Object;");
+	return  jni::Op<jobject>::CallStaticMethod(s_JNIBridgeClass, newProxyMID, (jlong) nativePtr, static_cast<jobjectArray>(interfaceArray));
+}
+
+void ProxyObject::DisableInstance(jobject proxy)
+{
+	static jmethodID disableProxyMID = jni::GetStaticMethodID(s_JNIBridgeClass, "disableInterfaceProxy", "(Ljava/lang/Object;)V");
+	jni::Op<jvoid>::CallStaticMethod(s_JNIBridgeClass, disableProxyMID, proxy);
+}
 
 
 }
