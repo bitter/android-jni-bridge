@@ -348,9 +348,9 @@ sub PrepareGPS
 	my $gps = $google_play_services->{$gps_version};
 	die ("Unknown Google Play Services version '$gps_version'") if (!$gps);
 
-	my $output = catfile($sdk_root, "extras", "google", "google_play_services", "libproject", "google-play-services_lib", "libs", "google-play-services.jar");
-
-	if (-e $output)
+	my $output = catfile($sdk_root, "extras", "google", "google_play_services");
+	my $gps_jar = catfile($output, "libproject", "google-play-services_lib", "libs", "google-play-services.jar");
+	if (-e $gps_jar)
 	{
 		print "\tGoogle Play Services version '$gps_version' is already installed\n";
 		return;
