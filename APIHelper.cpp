@@ -71,7 +71,7 @@ bool ProxyInvoker::__Register()
 jobject ProxyObject::__Invoke(jmethodID mid, jobjectArray args)
 {
 	jobject result;
-	if (!__Invoke(mid, args, &result))
+	if (!__InvokeInternal(mid, args, &result))
 	{
 		jni::ThrowNew<java::lang::NoSuchMethodError>("<no such native function>");
 	}

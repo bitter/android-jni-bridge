@@ -286,7 +286,6 @@ class ProxyObject : public virtual ProxyInvoker
 {
 // Dispatch invoke calls
 public:
-	virtual bool __Invoke(jmethodID mid, jobjectArray args, jobject* result) = 0;
 	virtual jobject __Invoke(jmethodID mid, jobjectArray args);
 
 // These functions are special and always forwarded
@@ -296,6 +295,7 @@ protected:
 	virtual ::jstring ToString() const; /// <-- need to fix this one - can't leave it like that
 
 	bool __TryInvoke(jmethodID methodID, jobjectArray args, bool* success, jobject* result);
+	virtual bool __InvokeInternal(jmethodID mid, jobjectArray args, jobject* result) = 0;
 
 // Factory stuff
 protected:
@@ -318,7 +318,7 @@ protected:
 
 private:
 	template<typename... Args> inline void DummyInvoke(Args&&...) {}
-	virtual bool __Invoke(jmethodID mid, jobjectArray args, jobject* result)
+	virtual bool __InvokeInternal(jmethodID mid, jobjectArray args, jobject* result)
 	{
 		bool success = false;
 		DummyInvoke(ProxyObject::__TryInvoke(mid, args, &success, result), TX::__Proxy::__TryInvoke(mid, args, &success, result)...);
