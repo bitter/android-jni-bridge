@@ -214,7 +214,7 @@ int main(int,char**)
 
 	{
 		jni::LocalFrame frame;
-		KillMePleazeRunnable* killMeRunnable = new KillMePleazeRunnable;
+		new KillMePleazeRunnable;
 	}
 	for (int i = 0; i < 32; ++i) // Do a couple of loops to massage the GC
 	{
