@@ -3,6 +3,7 @@
 #include <sys/time.h>
 
 #include "API.h"
+#include "Proxy.h"
 
 using namespace java::lang;
 using namespace java::io;
