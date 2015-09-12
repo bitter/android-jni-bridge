@@ -15,6 +15,7 @@ my @classes = (
 	'::android::app::Presentation',
 	'::android::content::Context',
 	'::android::hardware::display::DisplayManager',
+	'::android::hardware::GeomagneticField',
 	'::android::location::LocationManager',
 	'::android::media::AudioManager',
 	'::android::media::MediaRouter',
@@ -36,6 +37,7 @@ my @classes = (
 	'::java::lang::NoSuchMethodError',
 	'::java::lang::ClassCastException',
 	'::java::lang::UnsatisfiedLinkError',
+	'::java::util::HashSet',
 
 	'::com::google::android::gms::ads::identifier::AdvertisingIdClient',
 	'::com::google::android::gms::common::GooglePlayServicesAvailabilityException',
