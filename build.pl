@@ -28,6 +28,7 @@ my @classes = (
 	'::android::provider::Settings_Secure',
 	'::android::provider::Settings_System',
 	'::android::telephony::TelephonyManager',
+	'::android::view::Choreographer',
 	'::android::view::Display',
 	'::android::view::WindowManager',
 	'::android::webkit::MimeTypeMap',
