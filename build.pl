@@ -39,6 +39,7 @@ my @classes = (
 	'::java::lang::ClassCastException',
 	'::java::lang::UnsatisfiedLinkError',
 	'::java::util::HashSet',
+	'::java::util::Map_Entry',
 
 	'::com::google::android::gms::ads::identifier::AdvertisingIdClient',
 	'::com::google::android::gms::common::GooglePlayServicesAvailabilityException',
