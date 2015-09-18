@@ -1,4 +1,4 @@
-String::String(const char* str) : ::java::lang::Object(jni::NewStringUTF(str)) { __Initialize(); }
+String::String(const char* str) : ::java::lang::Object(str ? jni::NewStringUTF(str) : NULL) { __Initialize(); }
 String::~String()
 {
 	if (m_Str)
