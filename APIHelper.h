@@ -123,7 +123,8 @@ protected:
 // ------------------------------------------------
 // Utillities
 // ------------------------------------------------
-template <typename T> inline T Cast(jobject o) { return T(jni::IsInstanceOf(o, T::__CLASS) ? o : 0); }
+template <typename T> inline bool InstanceOf(jobject o) { return jni::IsInstanceOf(o, T::__CLASS); }
+template <typename T> inline T Cast(jobject o) { return T(InstanceOf<T>(o) ? o : 0); }
 template <typename T> inline bool Catch() { return jni::ExceptionThrown(T::__CLASS); }
 template <typename T> inline bool ThrowNew(const char* message) { return jni::ThrowNew(T::__CLASS, message) == 0; }
 

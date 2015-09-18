@@ -113,6 +113,19 @@ int main(int,char**)
 	printf("%s\n", static_cast<const char*>(string.ToString()));
 
 	// -------------------------------------------------------------
+	// Util functions
+	// -------------------------------------------------------------
+	java::lang::Object object = java::lang::Integer(23754);
+	if (jni::InstanceOf<java::lang::Number>(object) && jni::Cast<java::lang::Number>(object))
+	{
+		printf("%d\n", static_cast<int>(java::lang::Number(object)));
+	}
+	else
+	{
+		int* p = 0; *p = 3;
+	}
+
+	// -------------------------------------------------------------
 	// Array Test
 	// -------------------------------------------------------------
 	{
