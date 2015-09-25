@@ -32,6 +32,8 @@ my @classes = (
 	'::android::view::Display',
 	'::android::view::WindowManager',
 	'::android::webkit::MimeTypeMap',
+	'::android::widget::CheckBox',
+	'::android::widget::CompoundButton_OnCheckedChangeListener',
 	'::java::lang::Character',
 	'::java::lang::System',
 	'::java::lang::SecurityException',
