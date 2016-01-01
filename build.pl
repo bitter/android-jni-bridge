@@ -22,6 +22,7 @@ my @classes = (
 	'::android::net::ConnectivityManager',
 	'::android::os::Build',
 	'::android::os::Build_VERSION',
+	'::android::os::HandlerThread',
 	'::android::os::Environment',
 	'::android::os::PowerManager',
 	'::android::os::Vibrator',
@@ -45,7 +46,7 @@ my @classes = (
 
 	'::com::google::android::gms::ads::identifier::AdvertisingIdClient',
 	'::com::google::android::gms::common::GooglePlayServicesAvailabilityException',
-	'::com::google::android::gms::common::GooglePlayServicesNotAvailableException'
+	'::com::google::android::gms::common::GooglePlayServicesNotAvailableException',
 );
 
 sub BuildAndroid
