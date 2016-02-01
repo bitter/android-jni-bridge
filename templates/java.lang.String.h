@@ -4,10 +4,9 @@ String(const char* str);
 String& operator = (const String& other);
 bool EmptyOrNull();
 
-const char* c_str() { return static_cast<const char*>(*this); }
+const char* c_str();
 
 operator jstring () const;
-operator const char* ();
 
 private:
 	const char* m_Str;

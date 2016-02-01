@@ -29,7 +29,7 @@ String& String::operator = (const String& other)
 	return *this;
 }
 
-String::operator const char* ()
+const char* String::c_str()
 {
 	if (m_Object && !m_Str)
 		m_Str = jni::GetStringUTFChars(*this);
@@ -40,6 +40,6 @@ bool String::EmptyOrNull()
 {
 	if (!m_Object)
 		return true;
-	const char* str = *this;
+	const char* str = c_str();
 	return !str || !str[0];
 }

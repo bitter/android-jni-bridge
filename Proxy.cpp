@@ -56,7 +56,7 @@ jobject ProxyObject::__Invoke(jclass clazz, jmethodID mid, jobjectArray args)
 	if (!__InvokeInternal(clazz, mid, args, &result))
 	{
 		java::lang::reflect::Method method(jni::ToReflectedMethod(clazz, mid, false));
-		jni::ThrowNew<java::lang::NoSuchMethodError>(method.ToString());
+		jni::ThrowNew<java::lang::NoSuchMethodError>(method.ToString().c_str());
 	}
 
 	return result;
