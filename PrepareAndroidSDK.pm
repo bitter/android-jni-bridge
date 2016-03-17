@@ -35,6 +35,10 @@ our $sdks =
 	"android-15"	=> "android-15_r03.zip",
 	"android-16"	=> "android-16_r02.zip",
 	"android-17"	=> "android-17_r01.zip",
+	"android-18"    => "android-18_r02.zip",
+	"android-19"    => "android-19_r03.zip",
+	"android-21"    => "android-21_r02.zip",
+	"android-23"    => "android-23_r02.zip",
 };
 
 our $sdk_tools =
