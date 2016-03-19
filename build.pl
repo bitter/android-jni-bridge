@@ -31,6 +31,7 @@ my @classes = (
 	'::android::telephony::TelephonyManager',
 	'::android::view::Choreographer',
 	'::android::view::Display',
+	'::android::view::SurfaceView',
 	'::android::view::WindowManager',
 	'::android::webkit::MimeTypeMap',
 	'::android::widget::CheckBox',
