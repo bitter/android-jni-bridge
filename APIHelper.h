@@ -165,7 +165,7 @@ protected:
 	};
 
 public:
-	inline T operator[] (const int i)
+	inline T operator[] (const int i) const
 	{
 		T value = 0;
 		if (*this)
@@ -173,14 +173,24 @@ public:
 		return value;
 	}
 
-	inline T* Lock()
+	inline T* Lock() const
 	{
 		return *this ? jni::Op<T>::GetArrayElements(*this) : 0;
 	}
-	inline void Release(T* elements)
+	inline void Release(T* elements, bool writeBackData = true) const
 	{
 		if (*this)
-			jni::Op<T>::ReleaseArrayElements(*this, elements, 0);
+			jni::Op<T>::ReleaseArrayElements(*this, elements, writeBackData ? 0 : JNI_ABORT);
+	}
+
+	inline T* LockCritical() const
+	{
+		return *this ? jni::GetPrimitiveArrayCritical(*this, NULL) : 0;
+	}
+	inline void ReleaseCritical(T* elements, bool writeBackData = true) const
+	{
+		if (*this)
+			jni::ReleasePrimitiveArrayCritical(*this, elements, writeBackData ? 0 : JNI_ABORT);
 	}
 };
 

@@ -80,6 +80,8 @@ void         ReleaseStringUTFChars(jstring str, const char* utfchars);
 size_t       GetArrayLength(jarray obj);
 jobject      GetObjectArrayElement(jobjectArray obj, size_t index);
 void         SetObjectArrayElement(jobjectArray obj, size_t index, jobject val);
+void*        GetPrimitiveArrayCritical(jarray obj, jboolean *isCopy);
+void         ReleasePrimitiveArrayCritical(jarray obj, void *carray, jint mode);
 jobjectArray NewObjectArray(jsize length, jclass elementClass, jobject initialElement = 0);
 
 class ThreadScope

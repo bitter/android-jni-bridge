@@ -365,6 +365,16 @@ void SetObjectArrayElement(jobjectArray obj, size_t index, jobject val)
 	JNI_CALL(obj, true, env->SetObjectArrayElement(obj, index, val));
 }
 
+void* GetPrimitiveArrayCritical(jarray obj, jboolean *isCopy)
+{
+	JNI_CALL_RETURN(void*, obj, false, env->GetPrimitiveArrayCritical(obj, isCopy));
+}
+
+void ReleasePrimitiveArrayCritical(jarray obj, void *carray, jint mode)
+{
+	JNI_CALL(obj, false, env->ReleasePrimitiveArrayCritical(obj, carray, mode));
+}
+
 // --------------------------------------------------------------------------------------
 // ThreadScope
 // --------------------------------------------------------------------------------------
