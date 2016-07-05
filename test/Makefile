@@ -4,7 +4,7 @@ OBJDIR    := build
 
 CPPFLAGS  := ${CPPFLAGS} -Iinclude -I${JAVA_HOME}/include -I${JAVA_HOME}/include/darwin -std=c++11 -Wall -Werror
 CXXFLAGS  := ${CXXFLAGS} -fno-rtti -fno-exceptions -g
-LDFLAGS   := ${LDFLAGS} -framework JavaVM -L${OBJDIR} -Ldarwin -ljdk-7-jni
+LDFLAGS   := ${LDFLAGS} -L${OBJDIR} -Ldarwin -ljdk-7-jni -ljvm -L${JAVA_HOME}/jre/lib/server -Wl,-rpath,${JAVA_HOME}/jre/lib/server
 SRCS      := $(wildcard *.cpp)
 OBJS      := $(addprefix $(OBJDIR)/,$(SRCS:%.cpp=%.o))
 
