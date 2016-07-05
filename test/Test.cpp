@@ -110,7 +110,7 @@ int main(int,char**)
 
 	// CharSequence test
 	java::lang::CharSequence string = "hello world";
-	printf("%s\n", static_cast<const char*>(string.ToString()));
+	printf("%s\n", string.ToString().c_str());
 
 	// -------------------------------------------------------------
 	// Util functions
@@ -255,7 +255,6 @@ int main(int,char**)
 				printf("destroyed[%p]\n", this);
 			}
 
-
 			virtual void Run()
 			{
 				printf("Run[%p]!\n", this);
@@ -294,7 +293,7 @@ int main(int,char**)
 			while (iterator.HasNext())
 			{
 				String javaString = jni::Cast<String>(iterator.Next());
-				printf("%s\n", static_cast<const char*>(javaString));
+				printf("%s\n", javaString.c_str());
 			}
 		}
 		for (int i = 0; i < 32; ++i) // Do a couple of loops to massage the GC
@@ -322,7 +321,7 @@ int main(int,char**)
 
 		printf("equals: %d\n", runnable.Equals(runnable));
 		printf("hashcode: %d\n", runnable.HashCode());
-		printf("toString: %s\n", static_cast<const char*>(runnable.ToString()));
+		printf("toString: %s\n", runnable.ToString().c_str());
 	}
 
 	printf("%s\n", "EOP");
