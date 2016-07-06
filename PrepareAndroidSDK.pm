@@ -17,7 +17,7 @@ our @EXPORT_OK=qw(GetAndroidSDK);
 our $SDK_ROOT_ENV = "ANDROID_SDK_ROOT";
 our $NDK_ROOT_ENV = "ANDROID_NDK_ROOT";
 
-# based on https://dl-ssl.google.com/android/repository/repository-7.xml
+# based on https://dl.google.com/android/repository/repository-11.xml
 
 our $BASE_URL_SDK = "http://dl.google.com/android/repository/";
 our $BASE_URL_NDK = "http://dl.google.com/android/ndk/";
@@ -35,26 +35,34 @@ our $sdks =
 	"android-15"	=> "android-15_r03.zip",
 	"android-16"	=> "android-16_r02.zip",
 	"android-17"	=> "android-17_r01.zip",
-	"android-18"    => "android-18_r02.zip",
-	"android-19"    => "android-19_r03.zip",
-	"android-21"    => "android-21_r02.zip",
-	"android-23"    => "android-23_r02.zip",
+	"android-18"	=> "android-18_r02.zip",
+	"android-19"	=> "android-19_r03.zip",
+	"android-21"	=> "android-21_r02.zip",
+	"android-23"	=> "android-23_r02.zip",
 };
 
 our $sdk_tools =
 {
-	"version"		=> "20",
-	"windows"		=> "tools_r20-windows.zip",
-	"linux"			=> "tools_r20-linux.zip",
-	"macosx"		=> "tools_r20-macosx.zip",
+	"version"		=> "24.4.1",
+	"windows"		=> "tools_r24.4.1-windows.zip",
+	"linux"			=> "tools_r24.4.1-linux.zip",
+	"macosx"		=> "tools_r24.4.1-macosx.zip",
 };
 
 our $platform_tools =
 {
-	"version"		=> "14",
-	"windows"		=> "platform-tools_r12-windows.zip",
-	"linux"			=> "platform-tools_r12-linux.zip",
-	"macosx"		=> "platform-tools_r12-macosx.zip",
+	"version"		=> "23.1.0",
+	"windows"		=> "platform-tools_r23.1.0-windows.zip",
+	"linux"			=> "platform-tools_r23.1.0-linux.zip",
+	"macosx"		=> "platform-tools_r23.1.0-macosx.zip",
+};
+
+our $build_tools =
+{
+	"version"		=> "23.0.2",
+	"windows"		=> "build-tools_r23.0.2-windows.zip",
+	"linux"			=> "build-tools_r23.0.2-linux.zip",
+	"macosx"		=> "build-tools_r23.0.2-macosx.zip",
 };
 
 our $ndks =
@@ -131,23 +139,23 @@ our $ndks =
 						"macosx" => "android-ndk-r8e-darwin-x86.tar.bz2",
 						"linux" => "android-ndk-r8e-linux-x86.tar.bz2",
 					},
-	"r9b"		=>
+	"r9"		=>
 					{
-						"windows" => "android-ndk-r9b-windows.zip",
-						"macosx" => "android-ndk-r9b-darwin-x86.tar.bz2",
-						"linux" => "android-ndk-r9b-linux-x86.tar.bz2",
+						"windows" => "android-ndk-r9-windows-x86.zip",
+						"macosx" => "android-ndk-r9-darwin-x86.tar.bz2",
+						"linux" => "android-ndk-r9-linux-x86.tar.bz2",
 					},
-	"r9c"		=>
+	"r10b"		=>
 					{
-						"windows" => "android-ndk-r9c-windows.zip",
-						"macosx" => "android-ndk-r9c-darwin-x86.tar.bz2",
-						"linux" => "android-ndk-r9c-linux-x86.tar.bz2",
+						"windows" => "android-ndk32-r10b-windows-x86.zip",
+						"macosx" => "android-ndk32-r10b-darwin-x86.tar.bz2",
+						"linux" => "android-ndk32-r10b-linux-x86.tar.bz2",
 					},
-	"r10c"		=>
+	"r10e"		=>
 					{
-						"windows" => "android-ndk-r10c-windows-x86.exe",
-						"macosx" => "android-ndk-r10c-darwin-x86.bin",
-						"linux" => "android-ndk-r10c-linux-x86.bin",
+						"windows" => "android-ndk-r10e-windows-x86.exe",
+						"macosx" => "android-ndk-r10e-darwin-x86_64.bin",
+						"linux" => "android-ndk-r10e-linux-x86.bin",
 					},
 };
 
@@ -160,38 +168,38 @@ our ($HOST_ENV, $TMP, $HOME, $WINZIP);
 
 sub GetAndroidSDK
 {
-	if(lc $^O eq 'darwin')
-	{
+if(lc $^O eq 'darwin')
+{
 		$HOST_ENV = "macosx";
 		$TMP = $ENV{"TMPDIR"};
 		$HOME = $ENV{"HOME"};
-	}
-	elsif(lc $^O eq 'linux')
+}
+elsif(lc $^O eq 'linux')
+{
+	$HOST_ENV = "linux";
+	$TMP = "/tmp";
+	$HOME = $ENV{"HOME"};
+}
+elsif(lc $^O eq 'mswin32')
+{
+	$HOST_ENV = "windows";
+	$TMP = $ENV{"TMP"};
+	$HOME = $ENV{"USERPROFILE"};
+	if (-e "Tools/WinUtils/7z/7z.exe")
 	{
-		$HOST_ENV = "linux";
-		$TMP = "/tmp";
-		$HOME = $ENV{"HOME"};
+		$WINZIP = "Tools/WinUtils/7z/7z.exe";
 	}
-	elsif(lc $^O eq 'mswin32')
-	{
-		$HOST_ENV = "windows";
-		$TMP = $ENV{"TMP"};
-		$HOME = $ENV{"USERPROFILE"};
-		if (-e "Tools/WinUtils/7z/7z.exe")
-		{
-			$WINZIP = "Tools/WinUtils/7z/7z.exe";
-		}
-	}
-	elsif(lc $^O eq 'cygwin')
-	{
-		$HOST_ENV = "windows";
-		$TMP = $ENV{"TMP"};
-		$HOME = $ENV{"HOME"};
-	}
-	else
-	{
-		die "UNKNOWN " . $^O;
-	}
+}
+elsif(lc $^O eq 'cygwin')
+{
+	$HOST_ENV = "windows";
+	$TMP = $ENV{"TMP"};
+	$HOME = $ENV{"HOME"};
+}
+else
+{
+	die "UNKNOWN " . $^O;
+}
 
 	print "Environment:\n";
 	print "\tHost      = $HOST_ENV\n";
@@ -202,59 +210,54 @@ sub GetAndroidSDK
 	print "\t\$$NDK_ROOT_ENV = $ENV{$NDK_ROOT_ENV}\n" if ($ENV{$NDK_ROOT_ENV});
 	print "\n";
 
-	my ($sdk, $tools, $ndk, $gps, $setenv) = @_;
+my ($sdk, $tools, $ndk, $setenv) = @_;
 
-	if ($sdk or $tools)
+#	Getopt::Long::GetOptions("sdk=s"=>\$sdk, "ndk=s"=>\$ndk) or die ("Illegal cmdline options");
+
+if ($sdk or $tools)
+{
+	if ($sdk)
 	{
-		if ($sdk)
-		{
-			print "Installing SDK '$sdk':\n";
-		}
-		elsif($tools)
-		{
-			print "Installing SDK Tools '$tools':\n";
-		}
-
-		if (!$ENV{$SDK_ROOT_ENV})
-		{
-			$ENV{$SDK_ROOT_ENV} = catfile($HOME, "android-sdk_auto");
-			print "\t\$$SDK_ROOT_ENV not set; using $ENV{$SDK_ROOT_ENV} instead\n";
-		}
-
-		if (not $tools and $sdk)
-		{
-			my @split = split('-', $sdk);
-			$tools = $split[1];
-		}
-		if ($tools)
-		{
-			PrepareSDKTools($tools);
-		}
-		if ($sdk)
-		{
-			PrepareSDK($sdk);
-		}
-		print "\n";
+		print "Installing SDK '$sdk':\n";
+	}
+	elsif($tools)
+	{
+		print "Installing SDK Tools '$tools':\n";
 	}
 
-	if ($ndk)
+	if (!$ENV{$SDK_ROOT_ENV})
 	{
-		print "Installing NDK '$ndk':\n";
-		if (!$ENV{$NDK_ROOT_ENV})
-		{
-			$ENV{$NDK_ROOT_ENV} = catfile($HOME, "android-ndk_auto-" . $ndk);
-			print "\t\$$NDK_ROOT_ENV not set; using $ENV{$NDK_ROOT_ENV} instead\n";
-		}
-		PrepareNDK($ndk);
-		print "\n";
+		$ENV{$SDK_ROOT_ENV} = catfile($HOME, "android-sdk_auto");
+		print "\t\$$SDK_ROOT_ENV not set; using $ENV{$SDK_ROOT_ENV} instead\n";
 	}
 
-	if ($gps)
+	if (not $tools and $sdk)
 	{
-		print "Installing Google Play Services '$gps':\n";
-		PrepareGPS($gps);
-		print "\n";
+		my @split = split('-', $sdk);
+		$tools = $split[1];
 	}
+	if ($tools)
+	{
+		PrepareSDKTools($tools);
+	}
+	if ($sdk)
+	{
+		PrepareSDK($sdk);
+	}
+	print "\n";
+}
+
+if ($ndk)
+{
+	print "Installing NDK '$ndk':\n";
+	if (!$ENV{$NDK_ROOT_ENV})
+	{
+		$ENV{$NDK_ROOT_ENV} = catfile($HOME, "android-ndk_auto-" . $ndk);
+		print "\t\$$NDK_ROOT_ENV not set; using $ENV{$NDK_ROOT_ENV} instead\n";
+	}
+	PrepareNDK($ndk);
+	print "\n";
+}
 
 	my $export = "export";
 	if (lc $^O eq 'mswin32')
@@ -281,14 +284,50 @@ sub GetAndroidSDK
 
 sub PrepareSDKTools
 {
-	my ($sdk_version) = @_;
-	my $current_version = 0;
-
-	print "\tMinimum SDK Tools = $sdk_version\n";
 	my $sdk_root = $ENV{$SDK_ROOT_ENV};
 	my $sdk_tool_path = catfile($sdk_root, "tools");
-	my $platform_tool_path = catfile($sdk_root, "platform-tools");
-	if (open PROPS, "<", catfile("$sdk_tool_path", "source.properties"))
+	my $sdk_platform_tool_path = catfile($sdk_root, "platform-tools");
+	my $sdk_build_tool_path = catfile($sdk_root, "build-tools", $build_tools->{'version'});
+
+	my $sdk_tool_version = GetToolsRevisionMajor("$sdk_tool_path");
+	my $sdk_platform_tool_version = GetToolsRevisionMajor("$sdk_platform_tool_path");
+	my $sdk_build_tool_version = GetToolsRevisionMajor("$sdk_build_tool_path");
+
+	my $sdk_tool = $sdk_tools->{$HOST_ENV};
+	my $platform_tool = $platform_tools->{$HOST_ENV};
+	my $build_tool = $build_tools->{$HOST_ENV};
+	die ("Unknown host environment '$HOST_ENV'") if (!$sdk_tool or !$platform_tool or !$build_tool);
+
+	if (ParseMajor($sdk_tools->{'version'}) != $sdk_tool_version)
+	{
+		print "\tInstalling Tools\n";
+		DownloadAndUnpackArchive($BASE_URL_SDK . $sdk_tool, "$sdk_tool_path");
+	}
+
+	if (ParseMajor($platform_tools->{'version'}) != $sdk_platform_tool_version)
+	{
+		print "\tInstalling Platform Tools\n";
+		DownloadAndUnpackArchive($BASE_URL_SDK . $platform_tool, "$sdk_platform_tool_path");
+	}
+
+	if (ParseMajor($build_tools->{'version'}) != $sdk_build_tool_version)
+	{
+		print "\tInstalling Build Tools\n";
+		DownloadAndUnpackArchive($BASE_URL_SDK . $build_tool, "$sdk_build_tool_path");
+	}
+}
+
+sub ParseMajor
+{
+	my ($version_str) = @_;
+	my @version_numbers = split('\.', $version_str);
+	return int($version_numbers[0]);
+}
+
+sub GetToolsRevisionMajor
+{
+	my ($tools_dir) = @_;
+	if (open PROPS, "<", catfile("$tools_dir", "source.properties"))
 	{
 		my @content = <PROPS>;
 		close PROPS;
@@ -298,29 +337,11 @@ sub PrepareSDKTools
 			if (index($_, "Pkg.Revision") != -1)
 			{
 				my @tokens = split('=', $_);
-				$current_version = int($tokens[1]);
+				return ParseMajor($tokens[1]);
 			}
 		}
-		print "\tInstalled SDK Tools = $current_version\n";
 	}
-	if ($current_version >= $sdk_version and -e catfile($platform_tool_path, "NOTICE.txt") )
-	{
-		print "\tSDK tools are already installed.\n";
-		return;
-	}
-	if ($sdk_version > $sdk_tools->{'version'})
-	{
-		die "Unknown SDK Tools = $sdk_version\n";
-	}
-	my $sdk_tool = $sdk_tools->{$HOST_ENV};
-	my $platform_tool = $platform_tools->{$HOST_ENV};
-	die ("Unknown host environment '$HOST_ENV'") if (!$sdk_tool or !$platform_tool);
-
-	print "\tDownloading '$sdk_tool' to '$sdk_tool_path'\n";
-	DownloadAndUnpackArchive($BASE_URL_SDK . $sdk_tool, $sdk_tool_path);
-
-	print "\tDownloading '$platform_tool' to '$platform_tool_path'\n";
-	DownloadAndUnpackArchive($BASE_URL_SDK . $platform_tool, $platform_tool_path);
+	return 0;
 }
 
 sub PrepareSDK
@@ -434,12 +455,12 @@ sub DownloadAndUnpackArchive
 		{
 			system("tar", "-xf", $temporary_download_path, "-C", $temporary_unpack_path);
 		}
-		elsif (lc $suffix eq '.exe' or lc $suffix eq '.bin')
-		{
-			if (lc $suffix eq '.bin')
-			{
-				system('chmod', "+x", $temporary_download_path);
-			}
+		elsif (lc $suffix eq '.bin')
+		{	chmod(0755, $temporary_download_path);
+			system($temporary_download_path, "-o" . $temporary_unpack_path);
+		}
+		elsif (lc $suffix eq '.exe')
+		{	chmod(0755, $temporary_download_path);
 			system($temporary_download_path, "-o" . $temporary_unpack_path);
 		}
 		else
@@ -453,7 +474,14 @@ sub DownloadAndUnpackArchive
 	closedir $dh;
 	my $unpacked_subdir = catfile($temporary_unpack_path, $dirs[0]);
 
-	move($unpacked_subdir, $output) or system("mv $unpacked_subdir $output");
+	if(move($unpacked_subdir, $output) == 0)
+	{
+		# move failed. Try to do a recursive copy instead
+		if(File::Copy::Recursive::dircopy($unpacked_subdir, $output) == 0)
+		{
+			print "\t\tMove/Copy Error: " . $! . "\n";
+		}
+	}
 
 	# clean up
 	unlink($temporary_download_path);
@@ -474,6 +502,11 @@ sub PrepareNDK
 		chomp(@content);
 		my $current = $content[0];
 		print "\tCurrently installed = " . $current . "\n";
+
+		# remove the possible '-rcX' or ' (64-bit)' from the end
+		my @curr_arr = split(/ |-/, $current);
+		$current = $curr_arr[0];
+		print "\tShort name = " . $current . "\n";
 
 		if ($ndk eq $current)
 		{
