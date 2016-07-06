@@ -31,10 +31,10 @@ else
         GCC_BIN_PREFIX     := arm-linux-androideabi-
         GCC_TOOLCHAIN      := arm-linux-androideabi-${GCC_VERSION}
         CPPFLAGS           := ${CPPFLAGS} -marm
-        DEFINES            := ${DEFINES} -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__
         LLVM_FLAGS          = -gcc-toolchain ${GCC_TOOLCHAIN_PATH}
 
         ifeq (${ABI}, armeabi)
+                DEFINES    := ${DEFINES} -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__
                 CPPFLAGS   := ${CPPFLAGS} -target armv5te-none-linux-androideabi -march=armv5te -mtune=xscale -mfloat-abi=soft
         else
                 override ABI = armeabi-v7a
