@@ -210,7 +210,7 @@ else
 	print "\t\$$NDK_ROOT_ENV = $ENV{$NDK_ROOT_ENV}\n" if ($ENV{$NDK_ROOT_ENV});
 	print "\n";
 
-my ($sdk, $tools, $ndk, $setenv) = @_;
+my ($sdk, $tools, $ndk, $gps, $setenv) = @_;
 
 #	Getopt::Long::GetOptions("sdk=s"=>\$sdk, "ndk=s"=>\$ndk) or die ("Illegal cmdline options");
 
@@ -243,6 +243,12 @@ if ($sdk or $tools)
 	if ($sdk)
 	{
 		PrepareSDK($sdk);
+	}
+	if ($gps)
+	{
+		print "Installing Google Play Services '$gps':\n";
+		PrepareGPS($gps);
+		print "\n";
 	}
 	print "\n";
 }
