@@ -66,10 +66,10 @@ sub BuildAndroid
     PrepareAndroidSDK::GetAndroidSDK("$api", "21", "r10e", "24");
 
     system("make clean") && die("Clean failed");
-    system("make -j$threads PLATFORM=android ABI=mips        APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android mips library");
     system("make -j$threads PLATFORM=android ABI=armeabi-v7a APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv7 library");
-    system("make -j$threads PLATFORM=android ABI=armeabi     APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv5 library");
     system("make -j$threads PLATFORM=android ABI=x86         APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android x86 library");
+    system("make -j$threads PLATFORM=android ABI=armeabi     APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv5 library");
+    system("make -j$threads PLATFORM=android ABI=mips        APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android mips library");
 }
 
 sub ZipIt
