@@ -24,6 +24,8 @@ private:
 
 static JavaVM*     g_JavaVM;
 
+jobject kNull(0);
+
 // --------------------------------------------------------------------------------------
 // Oracle JNI functions (hidden)
 // http://docs.oracle.com/javase/6/docs/technotes/guides/jni/spec/functions.html#wp9502
