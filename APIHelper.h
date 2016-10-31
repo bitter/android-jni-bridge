@@ -213,15 +213,20 @@ public:
 
 	inline T* Lock()
 	{
-		T* elements = malloc(Length() * sizeof(T));
+		T* elements = reinterpret_cast<T*>(malloc(Length() * sizeof(T)));
 		for (int i = 0; i < Length(); ++i)
-			elements[i] = T(jni::GetObjectArrayElement(*this, i));
+			new (&(elements[i])) T(jni::GetObjectArrayElement(*this, i));
+
 		return elements;
 	}
 	inline void Release(T* elements)
 	{
 		for (int i = 0; i < Length(); ++i)
+		{
 			jni::SetObjectArrayElement(*this, i, elements[i]);
+			elements[i].~T();
+		}
+
 		free(elements);
 	}
 };

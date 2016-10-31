@@ -86,6 +86,10 @@ void*        GetPrimitiveArrayCritical(jarray obj, jboolean *isCopy);
 void         ReleasePrimitiveArrayCritical(jarray obj, void *carray, jint mode);
 jobjectArray NewObjectArray(jsize length, jclass elementClass, jobject initialElement = 0);
 
+jobject      NewDirectByteBuffer(void* buffer, jlong size);
+void*        GetDirectBufferAddress(jobject byteBuffer);
+jlong        GetDirectBufferCapacity(jobject byteBuffer);
+
 class ThreadScope
 {
 public:

@@ -1,5 +1,4 @@
 #!/usr/bin/env perl -w
-
 use PrepareAndroidSDK;
 use File::Path;
 use strict;
@@ -24,6 +23,10 @@ my @classes = (
 	'::android::hardware::GeomagneticField',
 	'::android::location::LocationManager',
 	'::android::media::AudioManager',
+	'::android::media::MediaCodec',
+	'::android::media::MediaCodec::BufferInfo',
+	'::android::media::MediaExtractor',
+	'::android::media::MediaFormat',
 	'::android::media::MediaRouter',
 	'::android::net::ConnectivityManager',
 	'::android::os::Build',
