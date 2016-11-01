@@ -377,6 +377,21 @@ void ReleasePrimitiveArrayCritical(jarray obj, void *carray, jint mode)
 	JNI_CALL(obj, false, env->ReleasePrimitiveArrayCritical(obj, carray, mode));
 }
 
+jobject NewDirectByteBuffer(void* buffer, jlong size)
+{
+	JNI_CALL_RETURN(jobject, buffer, true, env->NewDirectByteBuffer(buffer, size));
+}
+
+void* GetDirectBufferAddress(jobject byteBuffer)
+{
+	JNI_CALL_RETURN(void*, byteBuffer, true, env->GetDirectBufferAddress(byteBuffer));
+}
+
+jlong GetDirectBufferCapacity(jobject byteBuffer)
+{
+	JNI_CALL_RETURN(jlong, byteBuffer, true, env->GetDirectBufferCapacity(byteBuffer));
+}
+
 // --------------------------------------------------------------------------------------
 // ThreadScope
 // --------------------------------------------------------------------------------------
