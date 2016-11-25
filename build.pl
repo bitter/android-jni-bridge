@@ -53,6 +53,7 @@ my @classes = (
 	'::java::lang::NoSuchMethodError',
 	'::java::lang::ClassCastException',
 	'::java::lang::UnsatisfiedLinkError',
+	'::java::nio::channels::Channels',
 	'::java::util::HashSet',
 	'::java::util::Map_Entry',
 
