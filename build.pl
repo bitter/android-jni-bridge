@@ -54,6 +54,7 @@ my @classes = (
 	'::java::lang::ClassCastException',
 	'::java::lang::UnsatisfiedLinkError',
 	'::java::io::FileNotFoundException',
+	'::java::net::HttpURLConnection',
 	'::java::nio::channels::Channels',
 	'::java::util::HashSet',
 	'::java::util::Map_Entry',
