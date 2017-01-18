@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.regex.*;
 
+
 public class APIGenerator
 {
 	final static Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(new String[] {
@@ -145,14 +146,14 @@ public class APIGenerator
 		for (Class interfaceClass : clazz.getInterfaces())
 			collectDependencies(interfaceClass);
 
-		for (Field field : clazz.getDeclaredFields())
+		for (Field field : getDeclaredFieldsAndOrder(clazz))
 		{
 			if (!isValid(field))
 				continue;
 			collectDependencies(field.getType());
 		}
 
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsAndOrder(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -161,7 +162,7 @@ public class APIGenerator
 			collectDependencies(method.getReturnType());
 		}
 
-		for (Constructor constructor : clazz.getDeclaredConstructors())
+		for (Constructor constructor : getDeclaredConstructorsAndOrder(clazz))
 		{
 			if (!isValid(constructor))
 				continue;
@@ -540,7 +541,7 @@ public class APIGenerator
 	{
 		out.format("\tprotected:\n");
 		out.format("\t\tbool __TryInvoke(jclass, jmethodID, jobjectArray, bool*, jobject*);\n");
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsAndOrder(clazz))
 		{
 			if (!isValid(method) || isStatic(method))
 				continue;
@@ -554,12 +555,12 @@ public class APIGenerator
 	private void declareClassMembers(PrintStream out, Class clazz) throws Exception
 	{
 		File templateFile = new File("templates", clazz.getName() + ".h");
-		boolean hasTemplate  = templateFile.exists();
+		boolean hasTemplate = templateFile.exists();
 
 /* example ------------------
 	static ::java::util::Comparator& fCASE_INSENSITIVE_ORDER();
 */
-		for (Field field : clazz.getDeclaredFields())
+		for (Field field : getDeclaredFieldsAndOrder(clazz))
 		{
 			if (!isValid(field))
 				continue;
@@ -581,7 +582,7 @@ public class APIGenerator
 /* example ------------------
 	jni::Array< ::java::lang::String > Split(const ::java::lang::String& arg0, const ::jint& arg1) const;
 */
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsAndOrder(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -596,7 +597,7 @@ public class APIGenerator
 	static jobject __Constructor(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2);
 	String(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2) : ::java::lang::Object(__Constructor(arg0, arg1, arg2)) { __Initialize(); }
 */
-		for (Constructor constructor : clazz.getDeclaredConstructors())
+		for (Constructor constructor : getDeclaredConstructorsAndOrder(clazz))
 		{
 			if (!isValid(constructor, clazz))
 				continue;
@@ -657,7 +658,7 @@ public class APIGenerator
 		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
 
 		int nMethods = 0;
-		Method[] methods = clazz.getDeclaredMethods();
+		Method[] methods = getDeclaredMethodsAndOrder(clazz);
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
@@ -713,7 +714,7 @@ public class APIGenerator
 	return val;
 }
 */
-		for (Field field : clazz.getDeclaredFields())
+		for (Field field : getDeclaredFieldsAndOrder(clazz))
 		{
 			if (!isValid(field))
 				continue;
@@ -766,7 +767,7 @@ jni::Array< ::java::lang::String > String::Split(const ::java::lang::String& arg
 	return jni::Array< ::java::lang::String >(jni::Op<jobjectArray>::CallMethod(m_Object, methodID, (jobject)arg0, arg1));
 }
 */
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsAndOrder(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -798,7 +799,7 @@ jobject String::__Constructor(const jni::Array< ::jbyte >& arg0, const ::jint& a
 	return jni::NewObject(__CLASS, constructorID, (jobject)arg0, arg1, arg2);
 }
 */
-		for (Constructor constructor : clazz.getDeclaredConstructors())
+		for (Constructor constructor : getDeclaredConstructorsAndOrder(clazz))
 		{
 			if (!isValid(constructor, clazz))
 				continue;
@@ -810,6 +811,125 @@ jobject String::__Constructor(const jni::Array< ::jbyte >& arg0, const ::jint& a
 			out.format("\treturn jni::NewObject(__CLASS, constructorID%s);\n",
 				getParameterJNINames(params));
 			out.format("}\n");
+		}
+	}
+
+	public static Field[] getDeclaredFieldsAndOrder(Class clazz)
+	{
+		Field[] fields = null;
+		fields = clazz.getDeclaredFields();
+		return (Field[]) orderDeclaredObjects(clazz, fields);
+	}
+
+	public static Constructor[] getDeclaredConstructorsAndOrder(Class clazz)
+	{
+		Constructor[] constructors = null;
+		constructors = clazz.getDeclaredConstructors();
+		return (Constructor[]) orderDeclaredObjects(clazz, constructors);
+	}
+
+	public static Method[] getDeclaredMethodsAndOrder(Class clazz)
+	{
+		Method[] methods = null;
+		methods = clazz.getDeclaredMethods();
+		return (Method[]) orderDeclaredObjects(clazz, methods);
+	}
+
+	public static <T extends Member> T[] orderDeclaredObjects(Class clazz, T[] objects){
+		try
+		{
+			String resource = clazz.getName().replace('.', '/')+".class";
+			InputStream is = clazz.getClassLoader().getResourceAsStream(resource);
+			if (is == null)
+				return objects;
+
+			java.util.Arrays.sort(objects,new ByLength());
+			ArrayList<byte[]> blocks = new ArrayList<byte[]>();
+			int length = 0;
+			for (;;)
+			{
+				byte[] block = new byte[16*1024];
+				int n = is.read(block);
+				if (n > 0) {
+					if (n < block.length)
+						block = java.util.Arrays.copyOf(block,n);
+					length += block.length;
+					blocks.add(block);
+					} else
+						break;
+			}
+
+			byte[] data = new byte[length];
+			int offset = 0;
+			for (byte[] block : blocks)
+			{
+				System.arraycopy(block,0,data,offset,block.length);
+				offset += block.length;
+			}
+
+			String sdata = new String(data,java.nio.charset.Charset.forName("UTF-8"));
+			int lnt = sdata.indexOf("LineNumberTable");
+			if (lnt != -1) sdata = sdata.substring(lnt+"LineNumberTable".length()+3);
+			int cde = sdata.lastIndexOf("SourceFile");
+			if (cde != -1) sdata = sdata.substring(0,cde);
+
+			ObjectOffset objOff[] = new ObjectOffset[objects.length];
+			for (int i=0; i<objects.length; ++i)
+			{
+				int pos = -1;
+				for (;;)
+				{
+					pos=sdata.indexOf(objects[i].getName(),pos);
+					if (pos == -1) break;
+					boolean subset = false;
+					for (int j=0; j<i; ++j) {
+						if (objOff[j].offset >= 0 &&
+							objOff[j].offset <= pos &&
+							pos < objOff[j].offset + objOff[j].object.getName().length()) {
+							subset = true;
+							break;
+						}
+					}
+					if (subset)
+						pos += objects[i].getName().length();
+					else
+						break;
+				}
+				objOff[i] = new ObjectOffset(objects[i],pos);
+			}
+
+			java.util.Arrays.sort(objOff);
+			for (int i=0; i<objOff.length; ++i)
+				objects[i] = (T)objOff[i].object;
+		}
+		finally {
+			return objects;
+		}
+	}
+
+	private static class ObjectOffset<T extends Member> implements Comparable<ObjectOffset>
+	{
+		ObjectOffset(T _object, int _offset)
+		{
+			object = _object;
+			offset = _offset;
+		}
+		@Override
+		public int compareTo(ObjectOffset target)
+		{
+			return offset-target.offset;
+		}
+
+		T object;
+		int offset;
+	}
+
+	private static class ByLength<T extends Member> implements Comparator<T>
+	{
+		@Override
+		public int compare(T a, T b)
+		{
+			return b.getName().length()-a.getName().length();
 		}
 	}
 }
