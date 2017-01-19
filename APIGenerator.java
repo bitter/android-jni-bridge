@@ -6,7 +6,6 @@ import java.util.*;
 import java.util.jar.*;
 import java.util.regex.*;
 
-
 public class APIGenerator
 {
 	final static Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(new String[] {
@@ -146,14 +145,14 @@ public class APIGenerator
 		for (Class interfaceClass : clazz.getInterfaces())
 			collectDependencies(interfaceClass);
 
-		for (Field field : getDeclaredFieldsAndOrder(clazz))
+		for (Field field : getDeclaredFieldsSorted(clazz))
 		{
 			if (!isValid(field))
 				continue;
 			collectDependencies(field.getType());
 		}
 
-		for (Method method : getDeclaredMethodsAndOrder(clazz))
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -162,7 +161,7 @@ public class APIGenerator
 			collectDependencies(method.getReturnType());
 		}
 
-		for (Constructor constructor : getDeclaredConstructorsAndOrder(clazz))
+		for (Constructor constructor : getDeclaredConstructorsSorted(clazz))
 		{
 			if (!isValid(constructor))
 				continue;
@@ -262,7 +261,7 @@ public class APIGenerator
 		return namespace.toString();
 	}
 
-	private String getSignature(Class clazz) throws Exception
+	private static String getSignature(Class clazz) throws Exception
 	{
 		if (clazz == null)
 			return "V";
@@ -316,7 +315,7 @@ public class APIGenerator
 		return "";
 	}
 
-	private String getSignature(Class... clazzes) throws Exception
+	private static String getSignature(Class... clazzes) throws Exception
 	{
 		StringBuilder signature = new StringBuilder();
 		for (Class clazz : clazzes)
@@ -324,17 +323,17 @@ public class APIGenerator
 		return signature.toString();
 	}
 
-	private String getMethodSignature(Method method) throws Exception
+	private static String getMethodSignature(Method method) throws Exception
 	{
 		return String.format("(%s)%s", getSignature(method.getParameterTypes()), getSignature(method.getReturnType()));
 	}
 
-	private String getConstructorSignature(Constructor constructor) throws Exception
+	private static String getConstructorSignature(Constructor constructor) throws Exception
 	{
 		return String.format("(%s)V", getSignature(constructor.getParameterTypes()));
 	}
 
-	private String getFieldSignature(Field field) throws Exception
+	private static String getFieldSignature(Field field) throws Exception
 	{
 		return getSignature(field.getType());
 	}
@@ -541,7 +540,7 @@ public class APIGenerator
 	{
 		out.format("\tprotected:\n");
 		out.format("\t\tbool __TryInvoke(jclass, jmethodID, jobjectArray, bool*, jobject*);\n");
-		for (Method method : getDeclaredMethodsAndOrder(clazz))
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method) || isStatic(method))
 				continue;
@@ -560,7 +559,7 @@ public class APIGenerator
 /* example ------------------
 	static ::java::util::Comparator& fCASE_INSENSITIVE_ORDER();
 */
-		for (Field field : getDeclaredFieldsAndOrder(clazz))
+		for (Field field : getDeclaredFieldsSorted(clazz))
 		{
 			if (!isValid(field))
 				continue;
@@ -582,7 +581,7 @@ public class APIGenerator
 /* example ------------------
 	jni::Array< ::java::lang::String > Split(const ::java::lang::String& arg0, const ::jint& arg1) const;
 */
-		for (Method method : getDeclaredMethodsAndOrder(clazz))
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -597,7 +596,7 @@ public class APIGenerator
 	static jobject __Constructor(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2);
 	String(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2) : ::java::lang::Object(__Constructor(arg0, arg1, arg2)) { __Initialize(); }
 */
-		for (Constructor constructor : getDeclaredConstructorsAndOrder(clazz))
+		for (Constructor constructor : getDeclaredConstructorsSorted(clazz))
 		{
 			if (!isValid(constructor, clazz))
 				continue;
@@ -658,7 +657,7 @@ public class APIGenerator
 		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
 
 		int nMethods = 0;
-		Method[] methods = getDeclaredMethodsAndOrder(clazz);
+		Method[] methods = getDeclaredMethodsSorted(clazz);
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
@@ -714,7 +713,7 @@ public class APIGenerator
 	return val;
 }
 */
-		for (Field field : getDeclaredFieldsAndOrder(clazz))
+		for (Field field : getDeclaredFieldsSorted(clazz))
 		{
 			if (!isValid(field))
 				continue;
@@ -767,7 +766,7 @@ jni::Array< ::java::lang::String > String::Split(const ::java::lang::String& arg
 	return jni::Array< ::java::lang::String >(jni::Op<jobjectArray>::CallMethod(m_Object, methodID, (jobject)arg0, arg1));
 }
 */
-		for (Method method : getDeclaredMethodsAndOrder(clazz))
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -799,7 +798,7 @@ jobject String::__Constructor(const jni::Array< ::jbyte >& arg0, const ::jint& a
 	return jni::NewObject(__CLASS, constructorID, (jobject)arg0, arg1, arg2);
 }
 */
-		for (Constructor constructor : getDeclaredConstructorsAndOrder(clazz))
+		for (Constructor constructor : getDeclaredConstructorsSorted(clazz))
 		{
 			if (!isValid(constructor, clazz))
 				continue;
@@ -814,122 +813,56 @@ jobject String::__Constructor(const jni::Array< ::jbyte >& arg0, const ::jint& a
 		}
 	}
 
-	public static Field[] getDeclaredFieldsAndOrder(Class clazz)
+	public static Field[] getDeclaredFieldsSorted(Class clazz)
 	{
-		Field[] fields = null;
-		fields = clazz.getDeclaredFields();
-		return (Field[]) orderDeclaredObjects(clazz, fields);
+		Field[] fields = clazz.getDeclaredFields();
+		Arrays.sort(fields, ByNameAndSignature.FIELD);
+		return fields;
 	}
 
-	public static Constructor[] getDeclaredConstructorsAndOrder(Class clazz)
+	public static Constructor[] getDeclaredConstructorsSorted(Class clazz)
 	{
-		Constructor[] constructors = null;
-		constructors = clazz.getDeclaredConstructors();
-		return (Constructor[]) orderDeclaredObjects(clazz, constructors);
+		Constructor[] constructors = clazz.getDeclaredConstructors();
+		Arrays.sort(constructors, ByNameAndSignature.CONSTRUCTOR);
+		return constructors;
 	}
 
-	public static Method[] getDeclaredMethodsAndOrder(Class clazz)
+	public static Method[] getDeclaredMethodsSorted(Class clazz)
 	{
-		Method[] methods = null;
-		methods = clazz.getDeclaredMethods();
-		return (Method[]) orderDeclaredObjects(clazz, methods);
+		Method[] methods = clazz.getDeclaredMethods();
+		Arrays.sort(methods, ByNameAndSignature.METHOD);
+		return methods;
 	}
 
-	public static <T extends Member> T[] orderDeclaredObjects(Class clazz, T[] objects){
-		try
+	private static class ByNameAndSignature<T extends Member> implements Comparator<T>
+	{
+		public static final ByNameAndSignature<Field> FIELD = new ByNameAndSignature<Field>(0);
+		public static final ByNameAndSignature<Method> METHOD = new ByNameAndSignature<Method>(1);
+		public static final ByNameAndSignature<Constructor> CONSTRUCTOR = new ByNameAndSignature<Constructor>(2);
+
+		private final int whichMember;
+
+		private ByNameAndSignature(int whichMember)
 		{
-			String resource = clazz.getName().replace('.', '/')+".class";
-			InputStream is = clazz.getClassLoader().getResourceAsStream(resource);
-			if (is == null)
-				return objects;
-
-			java.util.Arrays.sort(objects,new ByLength());
-			ArrayList<byte[]> blocks = new ArrayList<byte[]>();
-			int length = 0;
-			for (;;)
-			{
-				byte[] block = new byte[16*1024];
-				int n = is.read(block);
-				if (n > 0) {
-					if (n < block.length)
-						block = java.util.Arrays.copyOf(block,n);
-					length += block.length;
-					blocks.add(block);
-					} else
-						break;
-			}
-
-			byte[] data = new byte[length];
-			int offset = 0;
-			for (byte[] block : blocks)
-			{
-				System.arraycopy(block,0,data,offset,block.length);
-				offset += block.length;
-			}
-
-			String sdata = new String(data,java.nio.charset.Charset.forName("UTF-8"));
-			int lnt = sdata.indexOf("LineNumberTable");
-			if (lnt != -1) sdata = sdata.substring(lnt+"LineNumberTable".length()+3);
-			int cde = sdata.lastIndexOf("SourceFile");
-			if (cde != -1) sdata = sdata.substring(0,cde);
-
-			ObjectOffset objOff[] = new ObjectOffset[objects.length];
-			for (int i=0; i<objects.length; ++i)
-			{
-				int pos = -1;
-				for (;;)
-				{
-					pos=sdata.indexOf(objects[i].getName(),pos);
-					if (pos == -1) break;
-					boolean subset = false;
-					for (int j=0; j<i; ++j) {
-						if (objOff[j].offset >= 0 &&
-							objOff[j].offset <= pos &&
-							pos < objOff[j].offset + objOff[j].object.getName().length()) {
-							subset = true;
-							break;
-						}
-					}
-					if (subset)
-						pos += objects[i].getName().length();
-					else
-						break;
-				}
-				objOff[i] = new ObjectOffset(objects[i],pos);
-			}
-
-			java.util.Arrays.sort(objOff);
-			for (int i=0; i<objOff.length; ++i)
-				objects[i] = (T)objOff[i].object;
+			this.whichMember = whichMember;
 		}
-		finally {
-			return objects;
-		}
-	}
 
-	private static class ObjectOffset<T extends Member> implements Comparable<ObjectOffset>
-	{
-		ObjectOffset(T _object, int _offset)
-		{
-			object = _object;
-			offset = _offset;
-		}
 		@Override
-		public int compareTo(ObjectOffset target)
+		public int compare(T o1, T o2)
 		{
-			return offset-target.offset;
-		}
-
-		T object;
-		int offset;
-	}
-
-	private static class ByLength<T extends Member> implements Comparator<T>
-	{
-		@Override
-		public int compare(T a, T b)
-		{
-			return b.getName().length()-a.getName().length();
+			int res = o1.getName().compareTo(o2.getName());
+			if (res != 0)
+				return res;
+			try
+			{
+				if(whichMember == 0)
+					return getFieldSignature((Field) o1).compareTo(getFieldSignature((Field) o2));
+				else if (whichMember == 1)
+					return getMethodSignature((Method) o1).compareTo(getMethodSignature((Method) o2));
+				else
+					return getConstructorSignature((Constructor) o1).compareTo(getConstructorSignature((Constructor) o2));
+			} catch(Throwable ignore){}
+			return res;
 		}
 	}
 }
