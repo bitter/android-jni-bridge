@@ -145,14 +145,14 @@ public class APIGenerator
 		for (Class interfaceClass : clazz.getInterfaces())
 			collectDependencies(interfaceClass);
 
-		for (Field field : clazz.getDeclaredFields())
+		for (Field field : getDeclaredFieldsSorted(clazz))
 		{
 			if (!isValid(field))
 				continue;
 			collectDependencies(field.getType());
 		}
 
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -161,7 +161,7 @@ public class APIGenerator
 			collectDependencies(method.getReturnType());
 		}
 
-		for (Constructor constructor : clazz.getDeclaredConstructors())
+		for (Constructor constructor : getDeclaredConstructorsSorted(clazz))
 		{
 			if (!isValid(constructor))
 				continue;
@@ -261,7 +261,7 @@ public class APIGenerator
 		return namespace.toString();
 	}
 
-	private String getSignature(Class clazz) throws Exception
+	private static String getSignature(Class clazz) throws Exception
 	{
 		if (clazz == null)
 			return "V";
@@ -281,6 +281,23 @@ public class APIGenerator
 			throw new Exception("Unknown primitive: " + clazz);
 		}
 		return "L" + clazz.getName().replace('.', '/') + ";";
+	}
+
+	private static String getSignature(Member member) throws Exception
+	{
+		if(member instanceof Field)
+			return getSignature(((Field)member).getType());
+		if(member instanceof Method)
+			return String.format("(%s)%s", (getSignature(((Method)member).getParameterTypes())), getSignature(((Method)member).getReturnType()));
+		return String.format("(%s)V", getSignature(((Constructor)member).getParameterTypes()));
+	}
+
+	private static String getSignature(Class... clazzes) throws Exception
+	{
+		StringBuilder signature = new StringBuilder();
+		for (Class clazz : clazzes)
+			signature.append(getSignature(clazz));
+		return signature.toString();
 	}
 
 	private Class box(Class clazz)
@@ -313,29 +330,6 @@ public class APIGenerator
 			if (clazz.equals(boolean.class))return ".BooleanValue()";
 		}
 		return "";
-	}
-
-	private String getSignature(Class... clazzes) throws Exception
-	{
-		StringBuilder signature = new StringBuilder();
-		for (Class clazz : clazzes)
-			signature.append(getSignature(clazz));
-		return signature.toString();
-	}
-
-	private String getMethodSignature(Method method) throws Exception
-	{
-		return String.format("(%s)%s", getSignature(method.getParameterTypes()), getSignature(method.getReturnType()));
-	}
-
-	private String getConstructorSignature(Constructor constructor) throws Exception
-	{
-		return String.format("(%s)V", getSignature(constructor.getParameterTypes()));
-	}
-
-	private String getFieldSignature(Field field) throws Exception
-	{
-		return getSignature(field.getType());
 	}
 
 	private String getClassName(Class clazz)
@@ -540,7 +534,7 @@ public class APIGenerator
 	{
 		out.format("\tprotected:\n");
 		out.format("\t\tbool __TryInvoke(jclass, jmethodID, jobjectArray, bool*, jobject*);\n");
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method) || isStatic(method))
 				continue;
@@ -554,12 +548,12 @@ public class APIGenerator
 	private void declareClassMembers(PrintStream out, Class clazz) throws Exception
 	{
 		File templateFile = new File("templates", clazz.getName() + ".h");
-		boolean hasTemplate  = templateFile.exists();
+		boolean hasTemplate = templateFile.exists();
 
 /* example ------------------
 	static ::java::util::Comparator& fCASE_INSENSITIVE_ORDER();
 */
-		for (Field field : clazz.getDeclaredFields())
+		for (Field field : getDeclaredFieldsSorted(clazz))
 		{
 			if (!isValid(field))
 				continue;
@@ -581,7 +575,7 @@ public class APIGenerator
 /* example ------------------
 	jni::Array< ::java::lang::String > Split(const ::java::lang::String& arg0, const ::jint& arg1) const;
 */
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -596,7 +590,7 @@ public class APIGenerator
 	static jobject __Constructor(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2);
 	String(const jni::Array< ::jchar >& arg0, const ::jint& arg1, const ::jint& arg2) : ::java::lang::Object(__Constructor(arg0, arg1, arg2)) { __Initialize(); }
 */
-		for (Constructor constructor : clazz.getDeclaredConstructors())
+		for (Constructor constructor : getDeclaredConstructorsSorted(clazz))
 		{
 			if (!isValid(constructor, clazz))
 				continue;
@@ -657,7 +651,7 @@ public class APIGenerator
 		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
 
 		int nMethods = 0;
-		Method[] methods = clazz.getDeclaredMethods();
+		Method[] methods = getDeclaredMethodsSorted(clazz);
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
@@ -678,7 +672,7 @@ public class APIGenerator
 		{
 			if (!isValid(method) || isStatic(method))
 				continue;
-			out.format("\t\tjni::GetMethodID(__CLASS, \"%s\", \"%s\"),\n", method.getName(), getMethodSignature(method));
+			out.format("\t\tjni::GetMethodID(__CLASS, \"%s\", \"%s\"),\n", method.getName(), getSignature(method));
 		}
 		out.format("\t};\n");
 		int i = 0;
@@ -713,7 +707,7 @@ public class APIGenerator
 	return val;
 }
 */
-		for (Field field : clazz.getDeclaredFields())
+		for (Field field : getDeclaredFieldsSorted(clazz))
 		{
 			if (!isValid(field))
 				continue;
@@ -727,7 +721,7 @@ public class APIGenerator
 			out.format("\tstatic jfieldID fieldID = jni::Get%sFieldID(__CLASS, \"%s\", \"%s\");\n",
 				isStatic(field) ? "Static" : "",
 				field.getName(),
-				getFieldSignature(field));
+				getSignature(field));
 			out.format("\t%s%s val = %s(jni::Op<%s>::Get%sField(%s, fieldID));\n",
 				isStaticFinal(field) ? "static " : "",
 				getClassName(field.getType()),
@@ -749,7 +743,7 @@ public class APIGenerator
 			out.format("\tstatic jfieldID fieldID = jni::Get%sFieldID(__CLASS, \"%s\", \"%s\");\n",
 				isStatic(field) ? "Static" : "",
 				field.getName(),
-				getFieldSignature(field));
+				getSignature(field));
 			out.format("\tjni::Op<%s>::Set%sField(%s, fieldID%s);\n",
 				getPrimitiveType(field.getType()),
 				isStatic(field) ? "Static" : "",
@@ -766,7 +760,7 @@ jni::Array< ::java::lang::String > String::Split(const ::java::lang::String& arg
 	return jni::Array< ::java::lang::String >(jni::Op<jobjectArray>::CallMethod(m_Object, methodID, (jobject)arg0, arg1));
 }
 */
-		for (Method method : clazz.getDeclaredMethods())
+		for (Method method : getDeclaredMethodsSorted(clazz))
 		{
 			if (!isValid(method))
 				continue;
@@ -781,7 +775,7 @@ jni::Array< ::java::lang::String > String::Split(const ::java::lang::String& arg
 			out.format("\tstatic jmethodID methodID = jni::Get%sMethodID(__CLASS, \"%s\", \"%s\");\n",
 				isStatic(method) ? "Static" : "",
 				method.getName(),
-				getMethodSignature(method));
+				getSignature(method));
 			out.format("\treturn %s(jni::Op<%s>::Call%sMethod(%s, methodID%s));\n",
 				getClassName(method.getReturnType()),
 				getPrimitiveType(method.getReturnType()),
@@ -798,7 +792,7 @@ jobject String::__Constructor(const jni::Array< ::jbyte >& arg0, const ::jint& a
 	return jni::NewObject(__CLASS, constructorID, (jobject)arg0, arg1, arg2);
 }
 */
-		for (Constructor constructor : clazz.getDeclaredConstructors())
+		for (Constructor constructor : getDeclaredConstructorsSorted(clazz))
 		{
 			if (!isValid(constructor, clazz))
 				continue;
@@ -806,10 +800,47 @@ jobject String::__Constructor(const jni::Array< ::jbyte >& arg0, const ::jint& a
 			out.format("jobject %s::__Constructor(%s)\n", getSimpleName(clazz), getParameterSignature(params));
 			out.format("{\n");
 			out.format("\tstatic jmethodID constructorID = jni::GetMethodID(__CLASS, \"<init>\", \"%s\");\n",
-				getConstructorSignature(constructor));
+				getSignature(constructor));
 			out.format("\treturn jni::NewObject(__CLASS, constructorID%s);\n",
 				getParameterJNINames(params));
 			out.format("}\n");
+		}
+	}
+
+	public static Field[] getDeclaredFieldsSorted(Class clazz)
+	{
+		Field[] fields = clazz.getDeclaredFields();
+		Arrays.sort(fields, new ByNameAndSignature());
+		return fields;
+	}
+
+	public static Constructor[] getDeclaredConstructorsSorted(Class clazz)
+	{
+		Constructor[] constructors = clazz.getDeclaredConstructors();
+		Arrays.sort(constructors, new ByNameAndSignature ());
+		return constructors;
+	}
+
+	public static Method[] getDeclaredMethodsSorted(Class clazz)
+	{
+		Method[] methods = clazz.getDeclaredMethods();
+		Arrays.sort(methods, new ByNameAndSignature());
+		return methods;
+	}
+
+	private static class ByNameAndSignature<T extends Member> implements Comparator<T>
+	{
+		@Override
+		public int compare(T o1, T o2)
+		{
+			int res = o1.getName().compareTo(o2.getName());
+			if (res != 0)
+				return res;
+			try
+			{
+				return getSignature(o1).compareTo(getSignature(o2));
+			} catch (Throwable ignore){}
+			return res;
 		}
 	}
 }

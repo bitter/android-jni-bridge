@@ -32,6 +32,9 @@ APIGENERATOR_CLASSES	:= $(addprefix $(BUILDDIR)/,$(APIGENERATOR_SRCS:%.java=%.cl
 static-apilib: ${GENDIR}/API.h ${GENDIR}/Makefile
 	@make -C ${GENDIR} LIBNAME=${LIBNAME} BUILDDIR=${PLATFORM_BUILDDIR} static-lib
 
+compile-static-apilib:
+	@make -C ${GENDIR} LIBNAME=${LIBNAME} BUILDDIR=${PLATFORM_BUILDDIR} static-lib
+
 api: ${GENDIR}/API.h ${GENDIR}/Makefile
 	@make -C ${GENDIR}  BUILDDIR=${PLATFORM_BUILDDIR} compile
 
