@@ -38,6 +38,7 @@ my @classes = (
 	'::android::provider::Settings_Secure',
 	'::android::provider::Settings_System',
 	'::android::telephony::TelephonyManager',
+	'::android::telephony::SubscriptionManager',
 	'::android::telephony::SubscriptionInfo',
 	'::android::view::Choreographer',
 	'::android::view::Display',
