@@ -60,6 +60,8 @@ my @classes = (
 	'::java::nio::channels::Channels',
 	'::java::util::HashSet',
 	'::java::util::Map_Entry',
+	'::java::util::NoSuchElementException',
+	'::java::util::Scanner',
 
 	'::com::google::android::gms::ads::identifier::AdvertisingIdClient',
 	'::com::google::android::gms::common::GooglePlayServicesAvailabilityException',
