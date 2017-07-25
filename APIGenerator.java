@@ -648,7 +648,6 @@ public class APIGenerator
 		out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
 		for (Class interfaze : clazz.getInterfaces())
 			out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
-		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
 
 		int nMethods = 0;
 		Method[] methods = getDeclaredMethodsSorted(clazz);
@@ -659,6 +658,13 @@ public class APIGenerator
 			++nMethods;
 		}
 
+		if (nMethods > 0)
+		{
+			out.format("static bool methodIDsFilled = false;\n");
+			out.format("static jmethodID methodIDs[%d];\n", nMethods);
+		}
+		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
+
 		// early out if there are no methods to invoke
 		if (nMethods == 0) { out.format("\treturn false;\n}"); return; }
 
@@ -667,15 +673,19 @@ public class APIGenerator
 
 		out.format("\tif (!jni::IsSameObject(clazz, %s::__CLASS))\n\t\treturn false;\n\n", getSimpleName(clazz));
 
-		out.format("\tstatic jmethodID methodIDs[] = {\n");
+		out.format("\tif (!methodIDsFilled)\n\t{\n");
+		int i = 0;
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
 				continue;
-			out.format("\t\tjni::GetMethodID(__CLASS, \"%s\", \"%s\"),\n", method.getName(), getSignature(method));
+			out.format("\t\tmethodIDs[%d] = jni::GetMethodID(__CLASS, \"%s\", \"%s\");\n", i, method.getName(), getSignature(method));
+			out.format("\t\tif (jni::ExceptionThrown()) methodIDs[%d] = NULL;\n", i++);
 		}
-		out.format("\t};\n");
-		int i = 0;
+		out.format("\t\t__sync_synchronize();\n");
+		out.format("\t\tmethodIDsFilled = true;\n\t}\n\n");
+
+		i = 0;
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
