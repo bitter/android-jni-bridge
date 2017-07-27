@@ -659,10 +659,12 @@ public class APIGenerator
 			++nMethods;
 		}
 
+		String staticDataNamespace = className + "_static_data";
 		if (nMethods > 0)
 		{
-			out.format("static bool s_%sMethodIDsFilled = false;\n", className);
-			out.format("static jmethodID s_%sMethodIDs[%d];\n", className, nMethods);
+			out.format("namespace %s {\n", staticDataNamespace);
+			out.format("static bool methodIDsFilled = false;\n");
+			out.format("static jmethodID methodIDs[%d];\n}\n", nMethods);
 		}
 		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", className);
 
@@ -674,17 +676,17 @@ public class APIGenerator
 
 		out.format("\tif (!jni::IsSameObject(clazz, %s::__CLASS))\n\t\treturn false;\n\n", className);
 
-		out.format("\tif (!s_%sMethodIDsFilled)\n\t{\n", className);
+		out.format("\tif (!%s::methodIDsFilled)\n\t{\n", staticDataNamespace);
 		int i = 0;
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
 				continue;
-			out.format("\t\ts_%sMethodIDs[%d] = jni::GetMethodID(__CLASS, \"%s\", \"%s\");\n", className, i, method.getName(), getSignature(method));
-			out.format("\t\tif (jni::ExceptionThrown()) s_%sMethodIDs[%d] = NULL;\n", className, i++);
+			out.format("\t\t%s::methodIDs[%d] = jni::GetMethodID(__CLASS, \"%s\", \"%s\");\n", staticDataNamespace, i, method.getName(), getSignature(method));
+			out.format("\t\tif (jni::ExceptionThrown()) %s::methodIDs[%d] = NULL;\n", staticDataNamespace, i++);
 		}
 		out.format("\t\t__sync_synchronize();\n");
-		out.format("\t\ts_%sMethodIDsFilled = true;\n\t}\n\n", className);
+		out.format("\t\t%s::methodIDsFilled = true;\n\t}\n\n", staticDataNamespace);
 
 		i = 0;
 		for (Method method : methods)
@@ -694,15 +696,15 @@ public class APIGenerator
 			Class returnType = method.getReturnType();
 			Class[] params = method.getParameterTypes();
 			if (returnType != void.class)
-				out.format("\tif (s_%sMethodIDs[%d] == methodID) { *result = jni::NewLocalRef(static_cast< %s >(%s(%s))); *success = true; return true; }\n",
-					className,
+				out.format("\tif (%s::methodIDs[%d] == methodID) { *result = jni::NewLocalRef(static_cast< %s >(%s(%s))); *success = true; return true; }\n",
+					staticDataNamespace,
 					i++,
 					getClassName(box(returnType)),
 					getMethodName(method),
 					getParametersFromJNIObjectArray(params));
 			else
-				out.format("\tif (s_%sMethodIDs[%d] == methodID) { *result = NULL; %s(%s); *success = true; return true; }\n",
-					className,
+				out.format("\tif (%s::methodIDs[%d] == methodID) { *result = NULL; %s(%s); *success = true; return true; }\n",
+					staticDataNamespace,
 					i++,
 					getMethodName(method),
 					getParametersFromJNIObjectArray(params));
