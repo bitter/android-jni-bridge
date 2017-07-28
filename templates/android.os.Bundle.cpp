@@ -6,11 +6,6 @@ void Bundle::__Initialize() { }
 // --------------------------------------------------------
 // Copied from android::os::BaseBundle
 // --------------------------------------------------------
-::jvoid Bundle::Remove(const ::java::lang::String& arg0) const
-{
-	static jmethodID methodID = jni::GetMethodID(__CLASS, "remove", "(Ljava/lang/String;)V");
-	return ::jvoid(jni::Op<jvoid>::CallMethod(m_Object, methodID, (jobject)arg0));
-}
 ::java::lang::Object Bundle::Get(const ::java::lang::String& arg0) const
 {
 	static jmethodID methodID = jni::GetMethodID(__CLASS, "get", "(Ljava/lang/String;)Ljava/lang/Object;");

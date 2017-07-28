@@ -4,7 +4,7 @@ use File::Path;
 use strict;
 use warnings;
 
-my $api = "android-23";
+my $api = "android-26";
 
 my @classes = (
 	'::android::Manifest_permission',
@@ -22,6 +22,8 @@ my @classes = (
 	'::android::hardware::input::InputManager',
 	'::android::hardware::GeomagneticField',
 	'::android::location::LocationManager',
+	'::android::media::AudioAttributes_Builder',
+	'::android::media::AudioFocusRequest_Builder',
 	'::android::media::AudioManager',
 	'::android::media::MediaCodec',
 	'::android::media::MediaCodec::BufferInfo',
