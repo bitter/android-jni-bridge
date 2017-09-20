@@ -51,7 +51,7 @@ else
         endif
 endif
 
-DEFINES               := ${DEFINES} -DANDROID
+DEFINES               := ${DEFINES} -DANDROID -DHAVE_INTTYPES_H
 override PLATFORM      = android/${ABI}
 LLVM_TOOLCAHIN_PATH    = ${NDK}/toolchains/${LLVM_TOOLCHAIN}/prebuilt/${HOST}
 GCC_TOOLCHAIN_PATH     = ${NDK}/toolchains/${GCC_TOOLCHAIN}/prebuilt/${HOST}
