@@ -36,6 +36,7 @@ my @classes = (
 	'::android::os::HandlerThread',
 	'::android::os::Environment',
 	'::android::os::PowerManager',
+	'::android::os::Process',
 	'::android::os::Vibrator',
 	'::android::provider::Settings_Secure',
 	'::android::provider::Settings_System',
