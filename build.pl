@@ -82,9 +82,8 @@ sub BuildAndroid
     system("make api-source PLATFORM=android APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make API source");
     system("make api-module PLATFORM=android APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make API module");
     system("make compile-static-apilib -j$threads PLATFORM=android ABI=armeabi-v7a APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv7 library");
+    system("make compile-static-apilib -j$threads PLATFORM=android ABI=arm64-v8a   APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android arm64 library");
     system("make compile-static-apilib -j$threads PLATFORM=android ABI=x86         APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android x86 library");
-    system("make compile-static-apilib -j$threads PLATFORM=android ABI=armeabi     APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv5 library");
-    system("make compile-static-apilib -j$threads PLATFORM=android ABI=mips        APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android mips library");
 }
 
 sub ZipIt

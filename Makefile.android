@@ -12,7 +12,7 @@ HOST   := $(shell echo ${UNAME} | tr '[:upper:]' '[:lower:]')-x86_64
 LLVM_VERSION	= 3.5
 LLVM_TOOLCHAIN := llvm-${LLVM_VERSION}
 
-GCC_VERSION     = 4.8
+GCC_VERSION     = 4.9
 
 ifeq (${ABI}, x86)
         NDK_ARCH           := arch-x86
@@ -26,6 +26,13 @@ else ifeq (${ABI}, mips)
         GCC_TOOLCHAIN      := mipsel-linux-android-${GCC_VERSION}
         CPPFLAGS           := ${CPPFLAGS} -target mipsel-none-linux-android
         LLVM_FLAGS          = -gcc-toolchain ${GCC_TOOLCHAIN_PATH}
+else ifeq (${ABI}, arm64-v8a)
+        NDK_ARCH           := arch-arm64
+        GCC_BIN_PREFIX     := aarch64-linux-android-
+        GCC_TOOLCHAIN      := aarch64-linux-android-${GCC_VERSION}
+        CPPFLAGS           := --target=aarch64-none-linux-android -march=armv8-a
+        LLVM_FLAGS          = --gcc-toolchain=${GCC_TOOLCHAIN_PATH}
+        API                := android-21
 else
         NDK_ARCH           := arch-arm
         GCC_BIN_PREFIX     := arm-linux-androideabi-
@@ -44,7 +51,7 @@ else
         endif
 endif
 
-DEFINES               := ${DEFINES} -DANDROID
+DEFINES               := ${DEFINES} -DANDROID -DHAVE_INTTYPES_H
 override PLATFORM      = android/${ABI}
 LLVM_TOOLCAHIN_PATH    = ${NDK}/toolchains/${LLVM_TOOLCHAIN}/prebuilt/${HOST}
 GCC_TOOLCHAIN_PATH     = ${NDK}/toolchains/${GCC_TOOLCHAIN}/prebuilt/${HOST}
