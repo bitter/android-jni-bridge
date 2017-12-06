@@ -65,6 +65,9 @@ my @classes = (
 	'::java::util::Map_Entry',
 	'::java::util::NoSuchElementException',
 	'::java::util::Scanner',
+	'::javax::net::ssl::X509TrustManager',
+	'::javax::net::ssl::TrustManagerFactory',
+	'::java::security::KeyStore',
 
 	'::com::google::android::gms::ads::identifier::AdvertisingIdClient',
 	'::com::google::android::gms::common::GooglePlayServicesAvailabilityException',
