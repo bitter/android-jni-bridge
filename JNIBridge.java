@@ -15,7 +15,8 @@ public class JNIBridge
 
 	static void disableInterfaceProxy(final Object proxy)
 	{
-		((InterfaceProxy) Proxy.getInvocationHandler(proxy)).disable();
+		if (proxy != null)
+			((InterfaceProxy) Proxy.getInvocationHandler(proxy)).disable();
 	}
 
 	private static class InterfaceProxy implements InvocationHandler
