@@ -1,6 +1,7 @@
 package bitter.jnibridge;
 
 import java.lang.reflect.*;
+import java.lang.invoke.*;
 
 public class JNIBridge
 {
@@ -14,23 +15,73 @@ public class JNIBridge
 
 	static void disableInterfaceProxy(final Object proxy)
 	{
-		((InterfaceProxy) Proxy.getInvocationHandler(proxy)).disable();
+		if (proxy != null)
+			((InterfaceProxy) Proxy.getInvocationHandler(proxy)).disable();
 	}
 
 	private static class InterfaceProxy implements InvocationHandler
 	{
 		private Object m_InvocationLock = new Object[0];
 		private long m_Ptr;
+		private Constructor<MethodHandles.Lookup> m_constructor;
 
-		public InterfaceProxy(final long ptr) { m_Ptr = ptr; }
+		@SuppressWarnings("unused")
+		public InterfaceProxy(final long ptr)
+		{
+			m_Ptr = ptr;
 
-		public Object invoke(Object proxy, Method method, Object[] args)
+			try
+			{
+				m_constructor = MethodHandles.Lookup.class.getDeclaredConstructor(Class.class, Integer.TYPE);
+				m_constructor.setAccessible(true);
+			}
+			// MethodHandles.Lookup was added in Android Oreo, we get NoClassDefFoundError on devices with older OS versions
+			catch (NoClassDefFoundError e)
+			{
+				m_constructor = null;
+			}
+			catch (NoSuchMethodException e)
+			{
+				m_constructor = null;
+			}
+		}
+
+		private Object invokeDefault(Object proxy, Throwable t, Method m, Object[] args) throws Throwable
+		{
+			if (args == null)
+			{
+				args = new Object[0];
+			}
+			Class<?> k = m.getDeclaringClass();
+			MethodHandles.Lookup lookup = m_constructor.newInstance(k, MethodHandles.Lookup.PRIVATE);
+
+			return lookup.in(k).unreflectSpecial(m, k).bindTo(proxy).invokeWithArguments(args);
+		}
+
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
 		{
 			synchronized (m_InvocationLock)
 			{
 				if (m_Ptr == 0)
 					return null;
-				return JNIBridge.invoke(m_Ptr, method.getDeclaringClass(), method, args);
+
+				try
+				{
+					return JNIBridge.invoke(m_Ptr, method.getDeclaringClass(), method, args);
+				}
+				catch (NoSuchMethodError e)
+				{
+					if (m_constructor == null)
+					{
+						System.err.println("JNIBridge error: Java interface default methods are only supported since Android Oreo");
+						throw e;
+					}
+					// isDefault() is only available since API 24, instead use getModifiers to check if a method has default implementation
+					if ((method.getModifiers() & Modifier.ABSTRACT) == 0)
+						return invokeDefault(proxy, e, method, args);
+					else
+						throw e;
+				}
 			}
 		}
 
