@@ -72,6 +72,16 @@ our $build_tools =
     "macosx"  => "build-tools_r25.0.2-macosx.zip",
     };
 
+our $gpss =
+    {
+    "froyo" =>
+        {
+        "version" => "12.0.0",
+        "url"     => "google_play_services_3265130_r12.zip",
+        "path"    => "google_play_services_froyo",
+        },
+    };
+
 our $ndks =
     {
     "r5" =>
@@ -237,11 +247,11 @@ sub GetAndroidSDK
     print "\t\$$NDK_ROOT_ENV = $ENV{$NDK_ROOT_ENV}\n" if ($ENV{$NDK_ROOT_ENV});
     print "\n";
 
-    my ($sdk, $tools, $ndk, $setenv) = @_;
+    my ($sdk, $tools, $gps, $ndk, $setenv) = @_;
 
 #   Getopt::Long::GetOptions("sdk=s"=>\$sdk, "ndk=s"=>\$ndk) or die ("Illegal cmdline options");
 
-    if ($sdk or $tools)
+    if ($sdk or $tools or $gps)
     {
         if ($sdk)
         {
@@ -250,6 +260,10 @@ sub GetAndroidSDK
         elsif ($tools)
         {
             print "Installing SDK Tools '$tools':\n";
+        }
+        elsif ($gps)
+        {
+            print "Installing Google Play Services '$gps':\n";
         }
 
         if (!$ENV{$SDK_ROOT_ENV})
@@ -270,6 +284,10 @@ sub GetAndroidSDK
         if ($sdk)
         {
             PrepareSDK($sdk);
+        }
+        if ($gps)
+        {
+            PrepareGPS($gps);
         }
         print "\n";
     }
@@ -389,6 +407,25 @@ sub PrepareSDK
     my $output = catfile($sdk_root, "platforms", $sdk);
     print "\tDownloading '$platform' to '$output'\n";
     DownloadAndUnpackArchive($BASE_URL_SDK . $platform, $output);
+}
+
+sub PrepareGPS
+{
+    my $sdk_root = $ENV{$SDK_ROOT_ENV};
+    my ($gps) = @_;
+
+    my $gps_version = $gpss->{$gps}->{'version'};
+    my $gps_url     = $gpss->{$gps}->{'url'};
+    my $gps_path    = catfile($sdk_root, 'extras', 'google', $gpss->{$gps}->{'path'});
+
+    if (-e catfile($gps_path, 'libproject', 'google-play-services_lib', 'libs', 'google-play-services.jar'))
+    {
+        print("\tGoogle Play Services '$gps_version' is already installed.\n");
+        return;
+    }
+
+    print("\tInstalling Google Play Services '$gps_version'...\n");
+    DownloadAndUnpackArchive($BASE_URL_SDK . $gps_url, $gps_path);
 }
 
 sub IsPlatformInstalled

@@ -1,7 +1,7 @@
 
 APINAME	= android-26
 APIJAR	= ${ANDROID_SDK_ROOT}/platforms/${APINAME}/android.jar
-GPSJAR  = ${ANDROID_SDK_ROOT}/extras/google/google_play_services/libproject/google-play-services_lib/libs/google-play-services.jar
+GPSJAR  = ${ANDROID_SDK_ROOT}/extras/google/google_play_services_froyo/libproject/google-play-services_lib/libs/google-play-services.jar
 
 APIRAW  = 16
 API     = android-9
