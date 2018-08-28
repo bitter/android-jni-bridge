@@ -31,6 +31,7 @@ my @classes = (
 	'::android::media::MediaFormat',
 	'::android::media::MediaRouter',
 	'::android::net::ConnectivityManager',
+	'::android::net::wifi::WifiManager',
 	'::android::os::Build',
 	'::android::os::Build_VERSION',
 	'::android::os::HandlerThread',
