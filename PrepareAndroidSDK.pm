@@ -46,30 +46,31 @@ our $sdks =
     "android-21" => "android-21_r02.zip",
     "android-23" => "android-23_r02.zip",
     "android-26" => "platform-26_r02.zip",
+    "android-28" => "platform-28_r06.zip",
     };
 
 our $sdk_tools =
     {
-    "version" => "24.4.1",
-    "windows" => "tools_r24.4.1-windows.zip",
-    "linux"   => "tools_r24.4.1-linux.zip",
-    "macosx"  => "tools_r24.4.1-macosx.zip",
+    "version" => "26.1.1",
+    "windows" => "sdk-tools-windows-4333796.zip",
+    "linux"   => "sdk-tools-linux-4333796.zip",
+    "macosx"  => "sdk-tools-darwin-4333796.zip",
     };
 
 our $platform_tools =
     {
-    "version" => "23.1.0",
-    "windows" => "platform-tools_r23.1.0-windows.zip",
-    "linux"   => "platform-tools_r23.1.0-linux.zip",
-    "macosx"  => "platform-tools_r23.1.0-macosx.zip",
+    "version" => "28.0.1",
+    "windows" => "platform-tools_r28.0.1-windows.zip",
+    "linux"   => "platform-tools_r28.0.1-linux.zip",
+    "macosx"  => "platform-tools_r28.0.1-darwin.zip",
     };
 
 our $build_tools =
     {
-    "version" => "25.0.2",
-    "windows" => "build-tools_r25.0.2-windows.zip",
-    "linux"   => "build-tools_r25.0.2-linux.zip",
-    "macosx"  => "build-tools_r25.0.2-macosx.zip",
+    "version" => "28.0.2",
+    "windows" => "build-tools_r28.0.2-windows.zip",
+    "linux"   => "build-tools_r28.0.2-linux.zip",
+    "macosx"  => "build-tools_r28.0.2-macosx.zip",
     };
 
 our $gpss =
