@@ -23,10 +23,11 @@ our @EXPORT_OK = qw(GetAndroidSDK);
 our $SDK_ROOT_ENV = "ANDROID_SDK_ROOT";
 our $NDK_ROOT_ENV = "ANDROID_NDK_ROOT";
 
-# based on https://dl.google.com/android/repository/repository-11.xml
+# based on https://dl.google.com/android/repository/repository-12.xml
+# and sdk tools on https://developer.android.com/studio/#downloads
 
 our $BASE_URL_SDK = "http://dl.google.com/android/repository/";
-our $BASE_URL_NDK = "http://dl.google.com/android/ndk/";
+our $BASE_URL_NDK = "http://dl.google.com/android/repository/";
 
 our $sdks =
     {
