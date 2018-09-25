@@ -32,7 +32,7 @@ jobject kNull(0);
 // --------------------------------------------------------------------------------------
 static jint PushLocalFrame(jint capacity)
 {
-	JNI_CALL_RETURN(jint, true, true, env->PushLocalFrame(capacity));
+	JNI_CALL_RETURN(jint, true, false, env->PushLocalFrame(capacity));
 }
 
 static jobject PopLocalFrame(jobject result)
@@ -411,7 +411,12 @@ ThreadScope::~ThreadScope()
 // --------------------------------------------------------------------------------------
 LocalFrame::LocalFrame(jint capacity)
 {
-	ClearErrors();
+	if (PeekError() != kJNI_NO_ERROR)
+	{
+		FatalError("Pushing new local frame with error present");
+		m_FramePushed = false;
+		return;
+	}
 	if (PushLocalFrame(capacity) < 0)
 		FatalError("Out of memory: Unable to allocate local frame(64)");
 	m_FramePushed = (PeekError() == kJNI_NO_ERROR);
