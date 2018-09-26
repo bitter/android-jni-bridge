@@ -27,7 +27,6 @@ our $NDK_ROOT_ENV = "ANDROID_NDK_ROOT";
 # and sdk tools on https://developer.android.com/studio/#downloads
 
 our $BASE_URL_SDK = "http://dl.google.com/android/repository/";
-our $BASE_URL_NDK = "http://dl.google.com/android/repository/";
 
 our $sdks =
     {
@@ -86,96 +85,6 @@ our $gpss =
 
 our $ndks =
     {
-    "r5" =>
-        {
-        "windows" => "android-ndk-r5-windows.zip",
-        "macosx"  => "android-ndk-r5-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r5-linux-x86.tar.bz2",
-        },
-    "r5b" =>
-        {
-        "windows" => "android-ndk-r5b-windows.zip",
-        "macosx"  => "android-ndk-r5b-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r5b-linux-x86.tar.bz2",
-        },
-    "r5c" =>
-        {
-        "windows" => "android-ndk-r5c-windows.zip",
-        "macosx"  => "android-ndk-r5c-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r5c-linux-x86.tar.bz2",
-        },
-    "r6" =>
-        {
-        "windows" => "android-ndk-r6-windows.zip",
-        "macosx"  => "android-ndk-r6-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r6-linux-x86.tar.bz2",
-        },
-    "r6b" =>
-        {
-        "windows" => "android-ndk-r6b-windows.zip",
-        "macosx"  => "android-ndk-r6b-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r6b-linux-x86.tar.bz2",
-        },
-    "r7" =>
-        {
-        "windows" => "android-ndk-r7-windows.zip",
-        "macosx"  => "android-ndk-r7-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r7-linux-x86.tar.bz2",
-        },
-    "r7b" =>
-        {
-        "windows" => "android-ndk-r7b-windows.zip",
-        "macosx"  => "android-ndk-r7b-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r7b-linux-x86.tar.bz2",
-        },
-    "r7c" =>
-        {
-        "windows" => "android-ndk-r7c-windows.zip",
-        "macosx"  => "android-ndk-r7c-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r7c-linux-x86.tar.bz2",
-        },
-    "r8" =>
-        {
-        "windows" => "android-ndk-r8-windows.zip",
-        "macosx"  => "android-ndk-r8-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r8-linux-x86.tar.bz2",
-        },
-    "r8b" =>
-        {
-        "windows" => "android-ndk-r8b-windows.zip",
-        "macosx"  => "android-ndk-r8b-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r8b-linux-x86.tar.bz2",
-        },
-    "r8c" =>
-        {
-        "windows" => "android-ndk-r8c-windows.zip",
-        "macosx"  => "android-ndk-r8c-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r8c-linux-x86.tar.bz2",
-        },
-    "r8e" =>
-        {
-        "windows" => "android-ndk-r8e-windows.zip",
-        "macosx"  => "android-ndk-r8e-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r8e-linux-x86.tar.bz2",
-        },
-    "r9" =>
-        {
-        "windows" => "android-ndk-r9-windows-x86.zip",
-        "macosx"  => "android-ndk-r9-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk-r9-linux-x86.tar.bz2",
-        },
-    "r10b" =>
-        {
-        "windows" => "android-ndk32-r10b-windows-x86.zip",
-        "macosx"  => "android-ndk32-r10b-darwin-x86.tar.bz2",
-        "linux"   => "android-ndk32-r10b-linux-x86.tar.bz2",
-        },
-    "r10e" =>
-        {
-        "windows" => "android-ndk-r10e-windows-x86_64.exe",
-        "macosx"  => "android-ndk-r10e-darwin-x86_64.bin",
-        "linux"   => "android-ndk-r10e-linux-x86_64.bin",
-        },
     "r13b" =>
         {
         "windows" => "android-ndk-r13b-windows-x86_64.zip",
@@ -627,14 +536,7 @@ sub PrepareNDK
     die("Unknown NDK release '$ndk' (for $HOST_ENV)") if (!$archive);
 
     print "\tDownloading '$ndk' to '$ndk_root'\n";
-    if ($ndk =~ m/r13/ or $ndk =~ m/r16/ or $ndk =~ m/r17/)
-    {
-        DownloadAndUnpackArchive($BASE_URL_SDK . $archive, $ndk_root);
-    }
-    else
-    {
-        DownloadAndUnpackArchive($BASE_URL_NDK . $archive, $ndk_root);
-    }
+    DownloadAndUnpackArchive($BASE_URL_SDK . $archive, $ndk_root);
 }
 
 1;
