@@ -67,10 +67,10 @@ our $platform_tools =
 
 our $build_tools =
     {
-    "version" => "28.0.2",
-    "windows" => "build-tools_r28.0.2-windows.zip",
-    "linux"   => "build-tools_r28.0.2-linux.zip",
-    "macosx"  => "build-tools_r28.0.2-macosx.zip",
+    "version" => "28.0.3",
+    "windows" => "build-tools_r28.0.3-windows.zip",
+    "linux"   => "build-tools_r28.0.3-linux.zip",
+    "macosx"  => "build-tools_r28.0.3-macosx.zip",
     };
 
 our $gpss =
