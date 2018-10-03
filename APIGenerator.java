@@ -645,10 +645,10 @@ public class APIGenerator
 
 	private void implementProxy(PrintStream out, Class clazz) throws Exception
 	{
-		out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getSimpleName(clazz), getSimpleName(clazz));
+		String className = getSimpleName(clazz);
+		out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", className, className, className);
 		for (Class interfaze : clazz.getInterfaces())
-			out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));
-		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", getSimpleName(clazz));
+			out.format("%s::__Proxy::operator %s() { return %s(static_cast<jobject>(__ProxyObject())); }\n", className, getClassName(interfaze), getClassName(interfaze));
 
 		int nMethods = 0;
 		Method[] methods = getDeclaredMethodsSorted(clazz);
@@ -659,23 +659,36 @@ public class APIGenerator
 			++nMethods;
 		}
 
+		String staticDataNamespace = className + "_static_data";
+		if (nMethods > 0)
+		{
+			out.format("namespace %s {\n", staticDataNamespace);
+			out.format("static bool methodIDsFilled = false;\n");
+			out.format("static jmethodID methodIDs[%d];\n}\n", nMethods);
+		}
+		out.format("bool %s::__Proxy::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result) {\n", className);
+
 		// early out if there are no methods to invoke
 		if (nMethods == 0) { out.format("\treturn false;\n}"); return; }
 
 		// return if success was already achieved
 		out.format("\tif (*success)\n\t\treturn false;\n\n");
 
-		out.format("\tif (!jni::IsSameObject(clazz, %s::__CLASS))\n\t\treturn false;\n\n", getSimpleName(clazz));
+		out.format("\tif (!jni::IsSameObject(clazz, %s::__CLASS))\n\t\treturn false;\n\n", className);
 
-		out.format("\tstatic jmethodID methodIDs[] = {\n");
+		out.format("\tif (!%s::methodIDsFilled)\n\t{\n", staticDataNamespace);
+		int i = 0;
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
 				continue;
-			out.format("\t\tjni::GetMethodID(__CLASS, \"%s\", \"%s\"),\n", method.getName(), getSignature(method));
+			out.format("\t\t%s::methodIDs[%d] = jni::GetMethodID(__CLASS, \"%s\", \"%s\");\n", staticDataNamespace, i, method.getName(), getSignature(method));
+			out.format("\t\tif (jni::ExceptionThrown()) %s::methodIDs[%d] = NULL;\n", staticDataNamespace, i++);
 		}
-		out.format("\t};\n");
-		int i = 0;
+		out.format("\t\t__sync_synchronize();\n");
+		out.format("\t\t%s::methodIDsFilled = true;\n\t}\n\n", staticDataNamespace);
+
+		i = 0;
 		for (Method method : methods)
 		{
 			if (!isValid(method) || isStatic(method))
@@ -683,13 +696,15 @@ public class APIGenerator
 			Class returnType = method.getReturnType();
 			Class[] params = method.getParameterTypes();
 			if (returnType != void.class)
-				out.format("\tif (methodIDs[%d] == methodID) { *result = jni::NewLocalRef(static_cast< %s >(%s(%s))); *success = true; return true; }\n",
+				out.format("\tif (%s::methodIDs[%d] == methodID) { *result = jni::NewLocalRef(static_cast< %s >(%s(%s))); *success = true; return true; }\n",
+					staticDataNamespace,
 					i++,
 					getClassName(box(returnType)),
 					getMethodName(method),
 					getParametersFromJNIObjectArray(params));
 			else
-				out.format("\tif (methodIDs[%d] == methodID) { *result = NULL; %s(%s); *success = true; return true; }\n",
+				out.format("\tif (%s::methodIDs[%d] == methodID) { *result = NULL; %s(%s); *success = true; return true; }\n",
+					staticDataNamespace,
 					i++,
 					getMethodName(method),
 					getParametersFromJNIObjectArray(params));

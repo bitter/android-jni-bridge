@@ -4,7 +4,7 @@ use File::Path;
 use strict;
 use warnings;
 
-my $api = "android-23";
+my $api = "android-26";
 
 my @classes = (
 	'::android::Manifest_permission',
@@ -22,6 +22,8 @@ my @classes = (
 	'::android::hardware::input::InputManager',
 	'::android::hardware::GeomagneticField',
 	'::android::location::LocationManager',
+	'::android::media::AudioAttributes_Builder',
+	'::android::media::AudioFocusRequest_Builder',
 	'::android::media::AudioManager',
 	'::android::media::MediaCodec',
 	'::android::media::MediaCodec::BufferInfo',
@@ -29,11 +31,13 @@ my @classes = (
 	'::android::media::MediaFormat',
 	'::android::media::MediaRouter',
 	'::android::net::ConnectivityManager',
+	'::android::net::wifi::WifiManager',
 	'::android::os::Build',
 	'::android::os::Build_VERSION',
 	'::android::os::HandlerThread',
 	'::android::os::Environment',
 	'::android::os::PowerManager',
+	'::android::os::Process',
 	'::android::os::Vibrator',
 	'::android::provider::Settings_Secure',
 	'::android::provider::Settings_System',
@@ -62,6 +66,9 @@ my @classes = (
 	'::java::util::Map_Entry',
 	'::java::util::NoSuchElementException',
 	'::java::util::Scanner',
+	'::javax::net::ssl::X509TrustManager',
+	'::javax::net::ssl::TrustManagerFactory',
+	'::java::security::KeyStore',
 
 	'::com::google::android::gms::ads::identifier::AdvertisingIdClient',
 	'::com::google::android::gms::common::GooglePlayServicesAvailabilityException',
@@ -73,15 +80,14 @@ sub BuildAndroid
 	my $class_names = join(' ', @classes);
 	my $threads = 8;
 
-    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "r10e", "24");
+    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "froyo", "r16b", "24");
 
     system("make clean") && die("Clean failed");
     system("make api-source PLATFORM=android APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make API source");
     system("make api-module PLATFORM=android APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make API module");
     system("make compile-static-apilib -j$threads PLATFORM=android ABI=armeabi-v7a APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv7 library");
+    system("make compile-static-apilib -j$threads PLATFORM=android ABI=arm64-v8a   APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android arm64 library");
     system("make compile-static-apilib -j$threads PLATFORM=android ABI=x86         APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android x86 library");
-    system("make compile-static-apilib -j$threads PLATFORM=android ABI=armeabi     APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android armv5 library");
-    system("make compile-static-apilib -j$threads PLATFORM=android ABI=mips        APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make android mips library");
 }
 
 sub ZipIt

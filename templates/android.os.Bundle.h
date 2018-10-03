@@ -4,7 +4,6 @@
 // --------------------------------------------------------
 // Copied from android::os::BaseBundle
 // --------------------------------------------------------
-::jvoid Remove(const ::java::lang::String& arg0) const;
 ::java::lang::Object Get(const ::java::lang::String& arg0) const;
 ::jboolean GetBoolean(const ::java::lang::String& arg0) const;
 ::jboolean GetBoolean(const ::java::lang::String& arg0, const ::jboolean& arg1) const;

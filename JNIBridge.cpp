@@ -32,7 +32,7 @@ jobject kNull(0);
 // --------------------------------------------------------------------------------------
 static jint PushLocalFrame(jint capacity)
 {
-	JNI_CALL_RETURN(jint, true, true, env->PushLocalFrame(capacity));
+	JNI_CALL_RETURN(jint, true, false, env->PushLocalFrame(capacity));
 }
 
 static jobject PopLocalFrame(jobject result)
@@ -45,7 +45,7 @@ static jobject PopLocalFrame(jobject result)
 // --------------------------------------------------------------------------------------
 struct Error
 {
-	Errno errno;
+	Errno _errno;
 	char  errstr[256];
 };
 static TLS<Error*> g_Error;
@@ -62,13 +62,13 @@ static inline Error& GetErrorInternal()
 	return *error;
 }
 
-static inline void SetError(Errno errno, const char* errmsg)
+static inline void SetError(Errno _errno, const char* errmsg)
 {
 	Error& error = GetErrorInternal();
-	if (error.errno)
+	if (error._errno)
 		return;
 
-	error.errno = errno;
+	error._errno = _errno;
 	strcpy(error.errstr, errmsg);
 }
 
@@ -77,7 +77,7 @@ static void ClearErrors()
 	JNIEnv* env = AttachCurrentThread();
 	if (env)
 	{
-		GetErrorInternal().errno = kJNI_NO_ERROR;
+		GetErrorInternal()._errno = kJNI_NO_ERROR;
 		env->ExceptionClear();
 	}
 }
@@ -92,7 +92,7 @@ void Initialize(JavaVM& vm)
 
 Errno PeekError()
 {
-	return GetErrorInternal().errno;
+	return GetErrorInternal()._errno;
 }
 
 const char* GetErrorMessage()
@@ -102,10 +102,10 @@ const char* GetErrorMessage()
 
 Errno CheckError()
 {
-	Errno errno = PeekError();
-	if (errno)
+	Errno _errno = PeekError();
+	if (_errno)
 		ClearErrors();
-	return errno;
+	return _errno;
 }
 
 jthrowable ExceptionThrown(jclass clazz)
@@ -144,7 +144,7 @@ bool CheckForExceptionError(JNIEnv* env) // Do we need to make this safer?
 	if (env->ExceptionCheck())
 	{
 		Error& error = GetErrorInternal();
-		if (!error.errno)
+		if (!error._errno)
 		{
 			SetError(kJNI_EXCEPTION_THROWN, "java.lang.IllegalThreadStateException: Unable to determine exception message");
 
@@ -411,9 +411,9 @@ ThreadScope::~ThreadScope()
 // --------------------------------------------------------------------------------------
 LocalFrame::LocalFrame(jint capacity)
 {
-	if (PushLocalFrame(capacity) < 0)
+	m_FramePushed = PushLocalFrame(capacity) == 0;
+	if (!m_FramePushed)
 		FatalError("Out of memory: Unable to allocate local frame(64)");
-	m_FramePushed = (PeekError() == kJNI_NO_ERROR);
 }
 LocalFrame::~LocalFrame()
 {
