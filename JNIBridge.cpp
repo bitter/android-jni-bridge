@@ -411,15 +411,9 @@ ThreadScope::~ThreadScope()
 // --------------------------------------------------------------------------------------
 LocalFrame::LocalFrame(jint capacity)
 {
-	if (PeekError() != kJNI_NO_ERROR)
-	{
-		FatalError("Pushing new local frame with error present");
-		m_FramePushed = false;
-		return;
-	}
-	if (PushLocalFrame(capacity) < 0)
+	m_FramePushed = PushLocalFrame(capacity) == 0;
+	if (!m_FramePushed)
 		FatalError("Out of memory: Unable to allocate local frame(64)");
-	m_FramePushed = (PeekError() == kJNI_NO_ERROR);
 }
 LocalFrame::~LocalFrame()
 {
