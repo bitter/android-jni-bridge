@@ -4,6 +4,7 @@ namespace jni
 {
 
 jni::Class s_JNIBridgeClass("bitter/jnibridge/JNIBridge");
+ProxyTracker::LinkedProxy* ProxyTracker::head = NULL;
 
 JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jclass clazz, jobject method, jobjectArray args)
 {
