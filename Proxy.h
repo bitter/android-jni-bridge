@@ -1,15 +1,20 @@
 #pragma once
 
 #include "API.h"
+#include <pthread.h>
 
 namespace jni
 {
+
+class ProxyTracker;
 
 class ProxyObject : public virtual ProxyInvoker
 {
 // Dispatch invoke calls
 public:
 	virtual jobject __Invoke(jclass clazz, jmethodID mid, jobjectArray args);
+// Cleanup all proxy objects
+	static void DeleteAllProxies();
 
 // These functions are special and always forwarded
 protected:
@@ -23,65 +28,33 @@ protected:
 // Factory stuff
 protected:
 	static jobject NewInstance(void* nativePtr, const jobject* interfaces, size_t interfaces_len);
-	static void    DisableInstance(jobject proxy);
+	static void DisableInstance(jobject proxy);
+
+	static ProxyTracker proxyTracker;
 };
 
 
 class ProxyTracker 
 {
 public:
-	static void StartTracking(ProxyObject* obj)
-	{
-		head = new LinkedProxy(obj, head);
-	}
+	ProxyTracker();
+	~ProxyTracker();
+	void StartTracking(ProxyObject* obj);
+	void StopTracking(ProxyObject* obj);
+	void DeleteAllProxies();
 
-	static void StopTracking(ProxyObject* obj)
-	{
-		LinkedProxy* current = head;
-		LinkedProxy* previous = NULL;
-		while (current != NULL && current->obj != obj)
-		{
-			previous = current;
-			current = current->next;
-		}
-
-		if (current != NULL)
-		{
-			if (previous == NULL)
-				head = current->next;
-			else
-				previous->next = current->next;
-			delete current;
-		}
-	}
-
-	static void DeleteAllProxies()
-	{
-		LinkedProxy* current = head;
-		head = NULL; // Destructor will call StopTracking, this will prevent it from looping through the whole list
-		while (current != NULL)
-		{
-			LinkedProxy* previous = current;
-			current = current->next;
-			delete previous->obj;
-			delete previous;
-		}
-	}
 private:
 	class LinkedProxy
 	{
 	public:
-		LinkedProxy(ProxyObject* target, LinkedProxy* link)
-		{
-			obj = target;
-			next = link;
-		}
+		LinkedProxy(ProxyObject* target, LinkedProxy* link) : obj(target), next(link) {}
 
 		ProxyObject* obj;
 		LinkedProxy* next;
 	};
 
-	static LinkedProxy* head;
+	LinkedProxy* head;
+	pthread_mutex_t lock;
 };
 
 template <class RefAllocator, class ...TX>
@@ -90,12 +63,12 @@ class ProxyGenerator : public ProxyObject, public TX::__Proxy...
 protected:
 	ProxyGenerator() : m_ProxyObject(NewInstance(this, (jobject[]){TX::__CLASS...}, sizeof...(TX)))	
 	{
-		ProxyTracker::StartTracking(this);
+		proxyTracker.StartTracking(this);
 	}
 
 	virtual ~ProxyGenerator()
 	{
-		ProxyTracker::StopTracking(this);
+		proxyTracker.StopTracking(this);
 		DisableInstance(__ProxyObject());
 	}
 
