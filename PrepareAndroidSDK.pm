@@ -103,6 +103,12 @@ our $ndks =
         "macosx"  => "android-ndk-r17-darwin-x86_64.zip",
         "linux"   => "android-ndk-r17-linux-x86_64.zip",
         },
+    "r19" =>
+        {
+        "windows" => "android-ndk-r19-windows-x86_64.zip",
+        "macosx"  => "android-ndk-r19-darwin-x86_64.zip",
+        "linux"   => "android-ndk-r19-linux-x86_64.zip",
+        },
     };
 
 our $sourcePropVersions =
@@ -110,6 +116,7 @@ our $sourcePropVersions =
     "13.1.3345770" => "r13b (64-bit)",
     "16.1.4479499" => "r16b (64-bit)",
     "17.0.4754217" => "r17 (64-bit)",
+    "19.0.5232133" => "r19 (64-bit)",
     };
 
 our ($HOST_ENV, $TMP, $HOME, $WINZIP);

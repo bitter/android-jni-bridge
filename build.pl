@@ -80,7 +80,7 @@ sub BuildAndroid
 	my $class_names = join(' ', @classes);
 	my $threads = 8;
 
-    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "froyo", "r16b", "24");
+    PrepareAndroidSDK::GetAndroidSDK("$api", "21", "froyo", "r19", "24");
 
     system("make clean") && die("Clean failed");
     system("make api-source PLATFORM=android APINAME=\"$api\" APICLASSES=\"$class_names\"") && die("Failed to make API source");
