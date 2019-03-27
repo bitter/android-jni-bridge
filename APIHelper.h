@@ -1,6 +1,7 @@
 #pragma once
 
 #include "JNIBridge.h"
+#include "ExpandingArray.h"
 
 namespace jni
 {
@@ -105,6 +106,24 @@ private:
 private:
 	char*       m_ClassName;
 	Ref<GlobalRefAllocator, jclass> m_Class;
+};
+
+class GlobalClass
+{
+public:
+	GlobalClass(const char* name, jclass clazz = 0);
+	~GlobalClass();
+
+	inline operator jclass()
+	{
+		return static_cast<jclass>(*m_Class);
+	}
+
+	static void CleanupAllClasses();
+
+private:
+	static ExpandingArray<GlobalClass*> g_AllClasses;
+	Class* m_Class;
 };
 
 class Object

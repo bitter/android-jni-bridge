@@ -4,7 +4,7 @@ namespace jni
 {
 
 jni::Class s_JNIBridgeClass("bitter/jnibridge/JNIBridge");
-ProxyTracker ProxyObject::proxyTracker;
+ExpandingArray<ProxyObject*> ProxyObject::g_AllProxies;
 
 JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jclass clazz, jobject method, jobjectArray args)
 {
@@ -65,7 +65,11 @@ jobject ProxyObject::__Invoke(jclass clazz, jmethodID mid, jobjectArray args)
 
 void ProxyObject::DeleteAllProxies()
 {
-	proxyTracker.DeleteAllProxies();
+	while (g_AllProxies.GetCount() > 0)
+	{
+		delete g_AllProxies[0];
+	}
+	g_AllProxies.Clear();
 }
 
 bool ProxyObject::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result)
@@ -101,65 +105,6 @@ void ProxyObject::DisableInstance(jobject proxy)
 {
 	static jmethodID disableProxyMID = jni::GetStaticMethodID(s_JNIBridgeClass, "disableInterfaceProxy", "(Ljava/lang/Object;)V");
 	jni::Op<jvoid>::CallStaticMethod(s_JNIBridgeClass, disableProxyMID, proxy);
-}
-
-ProxyTracker::ProxyTracker()
-{
-	pthread_mutexattr_t attr;
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-	pthread_mutex_init(&lock, &attr);
-	pthread_mutexattr_destroy(&attr);
-	head = NULL;
-}
-
-ProxyTracker::~ProxyTracker()
-{
-	pthread_mutex_destroy(&lock);
-}
-
-void ProxyTracker::StartTracking(ProxyObject* obj)
-{
-	pthread_mutex_lock(&lock);
-	head = new LinkedProxy(obj, head);
-	pthread_mutex_unlock(&lock);
-}
-
-void ProxyTracker::StopTracking(ProxyObject* obj)
-{
-	pthread_mutex_lock(&lock);
-	LinkedProxy* current = head;
-	LinkedProxy* previous = NULL;
-	while (current != NULL && current->obj != obj)
-	{
-		previous = current;
-		current = current->next;
-	}
-
-	if (current != NULL)
-	{
-		if (previous == NULL)
-			head = current->next;
-		else
-			previous->next = current->next;
-		delete current;
-	}
-	pthread_mutex_unlock(&lock);
-}
-
-void ProxyTracker::DeleteAllProxies()
-{
-	pthread_mutex_lock(&lock);
-	LinkedProxy* current = head;
-	head = NULL; // Destructor will call StopTracking, this will prevent it from looping through the whole list
-	while (current != NULL)
-	{
-		LinkedProxy* previous = current;
-		current = current->next;
-		delete previous->obj;
-		delete previous;
-	}
-	pthread_mutex_unlock(&lock);
 }
 
 }
