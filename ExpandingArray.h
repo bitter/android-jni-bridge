@@ -36,7 +36,7 @@ namespace jni {
 		void Remove(T target)
 		{
 			pthread_mutex_lock(&lock);
-			for(int i = count - 1; i >= 0; i--)
+			for (int i = count - 1; i >= 0; i--)
 			{
 				if (elements[i] == target)
 				{
