@@ -65,9 +65,9 @@ jobject ProxyObject::__Invoke(jclass clazz, jmethodID mid, jobjectArray args)
 
 void ProxyObject::DeleteAllProxies()
 {
-	while (g_AllProxies.GetCount() > 0)
+	for (int i = g_AllProxies.GetCount() - 1; i >= 0; i--)
 	{
-		delete g_AllProxies[0];
+		delete g_AllProxies[i];
 	}
 	g_AllProxies.Clear();
 }
