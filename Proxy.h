@@ -1,6 +1,7 @@
 #pragma once
 
 #include "API.h"
+#include "ListOfCleanables.h"
 
 namespace jni
 {
@@ -27,12 +28,17 @@ protected:
 	static jobject NewInstance(void* nativePtr, const jobject* interfaces, size_t interfaces_len);
 	static void DisableInstance(jobject proxy);
 
-	static ExpandingArray<ProxyObject*> g_AllProxies;
+	static ListOfCleanables g_AllProxies;
 };
 
 template <class RefAllocator, class ...TX>
-class ProxyGenerator : public ProxyObject, public TX::__Proxy...
-{	
+class ProxyGenerator : public ProxyObject, ICleanable, public TX::__Proxy...
+{
+public:
+	void Cleanup() {
+		delete this;
+	}
+
 protected:
 	ProxyGenerator() : m_ProxyObject(NewInstance(this, (jobject[]){TX::__CLASS...}, sizeof...(TX)))	
 	{

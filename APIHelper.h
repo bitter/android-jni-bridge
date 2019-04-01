@@ -1,7 +1,8 @@
 #pragma once
 
 #include "JNIBridge.h"
-#include "ExpandingArray.h"
+#include "ListOfCleanables.h"
+#include "ICleanable.h"
 
 namespace jni
 {
@@ -90,7 +91,7 @@ private:
 };
 
 
-class Class
+class Class : public ICleanable
 {
 public:
 	Class(const char* name, jclass clazz = 0);
@@ -114,7 +115,7 @@ private:
 private:
 	char*       m_ClassName;
 	Ref<GlobalRefAllocator, jclass> m_Class;
-	static ExpandingArray<Class*> g_AllClasses;
+	static ListOfCleanables g_AllClasses;
 
 };
 

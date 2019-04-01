@@ -5,7 +5,7 @@
 
 namespace jni
 {
-	ExpandingArray<Class*> Class::g_AllClasses;
+	ListOfCleanables Class::g_AllClasses;
 
 	Class::Class(const char* name, jclass clazz) : m_Class(clazz)
 	{
@@ -32,11 +32,7 @@ namespace jni
 
 	void Class::CleanupAllClasses()
 	{
-		for (int i = g_AllClasses.GetCount() - 1; i >= 0; i--)
-		{
-			g_AllClasses[i]->Cleanup();
-		}
-		g_AllClasses.Clear();
+		g_AllClasses.CleanupAll();
 	}
 
 }

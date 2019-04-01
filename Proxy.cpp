@@ -4,7 +4,7 @@ namespace jni
 {
 
 jni::Class s_JNIBridgeClass("bitter/jnibridge/JNIBridge");
-ExpandingArray<ProxyObject*> ProxyObject::g_AllProxies;
+ListOfCleanables ProxyObject::g_AllProxies;
 
 JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jclass clazz, jobject method, jobjectArray args)
 {
@@ -65,11 +65,7 @@ jobject ProxyObject::__Invoke(jclass clazz, jmethodID mid, jobjectArray args)
 
 void ProxyObject::DeleteAllProxies()
 {
-	for (int i = g_AllProxies.GetCount() - 1; i >= 0; i--)
-	{
-		delete g_AllProxies[i];
-	}
-	g_AllProxies.Clear();
+	g_AllProxies.CleanupAll();
 }
 
 bool ProxyObject::__TryInvoke(jclass clazz, jmethodID methodID, jobjectArray args, bool* success, jobject* result)
