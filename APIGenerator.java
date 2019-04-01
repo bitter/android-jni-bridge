@@ -504,7 +504,7 @@ public class APIGenerator
 		header.format("struct ");
 		header.format("%s : %s", getSimpleName(clazz), getSuperClassName(clazz));
 		header.format("\n{\n");
-		header.format("\tstatic jni::GlobalClass __CLASS;\n\n");
+		header.format("\tstatic jni::Class __CLASS;\n\n");
 
 		// Use cast operators for interfaces to avoid deadly diamond of death
 		for (Class interfaze : clazz.getInterfaces())
@@ -625,7 +625,7 @@ public class APIGenerator
 	private void implementClass(PrintStream out, Class clazz) throws Exception
 	{
 		String namespace = enterNameSpace(out, null, clazz);
-		out.format("jni::GlobalClass %s::__CLASS(\"%s\");\n\n", getSimpleName(clazz), clazz.getName().replace('.', '/'));
+		out.format("jni::Class %s::__CLASS(\"%s\");\n\n", getSimpleName(clazz), clazz.getName().replace('.', '/'));
 
 		for (Class interfaze : clazz.getInterfaces())
 			out.format("%s::operator %s() { return %s((jobject)*this); }\n", getSimpleName(clazz), getClassName(interfaze), getClassName(interfaze));

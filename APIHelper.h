@@ -40,6 +40,11 @@ public:
 		return *this;
 	}
 
+	void Cleanup()
+	{
+		Release();
+	}
+
 private:
 	class RefCounter
 	{
@@ -73,7 +78,7 @@ private:
 
 	void Release()
 	{
-		if (!m_Ref->Release())
+		if (m_Ref != NULL && !m_Ref->Release())
 		{
 			delete m_Ref;
 			m_Ref = NULL;
@@ -99,6 +104,9 @@ public:
 		return m_Class = jni::FindClass(m_ClassName);
 	}
 
+	void Cleanup();
+	static void CleanupAllClasses();
+
 private:
 	Class(const Class& clazz);
 	Class& operator = (const Class& o);
@@ -106,24 +114,8 @@ private:
 private:
 	char*       m_ClassName;
 	Ref<GlobalRefAllocator, jclass> m_Class;
-};
+	static ExpandingArray<Class*> g_AllClasses;
 
-class GlobalClass
-{
-public:
-	GlobalClass(const char* name, jclass clazz = 0);
-	~GlobalClass();
-
-	inline operator jclass()
-	{
-		return static_cast<jclass>(*m_Class);
-	}
-
-	static void CleanupAllClasses();
-
-private:
-	static ExpandingArray<GlobalClass*> g_AllClasses;
-	Class* m_Class;
 };
 
 class Object
