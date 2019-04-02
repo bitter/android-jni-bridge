@@ -1,8 +1,7 @@
 #pragma once
 
 #include "JNIBridge.h"
-#include "ListOfCleanables.h"
-#include "ICleanable.h"
+#include "LinkedList.h"
 
 namespace jni
 {
@@ -91,7 +90,7 @@ private:
 };
 
 
-class Class : public ICleanable
+class Class
 {
 public:
 	Class(const char* name, jclass clazz = 0);
@@ -113,9 +112,18 @@ private:
 	Class& operator = (const Class& o);
 
 private:
+	class ClassTracker {
+	public:
+		void Add(Class* target);
+		void Remove(Class* target);
+		void CleanupAll();
+	private:
+		LinkedList<Class> list;
+	};
+
 	char*       m_ClassName;
 	Ref<GlobalRefAllocator, jclass> m_Class;
-	static ListOfCleanables g_AllClasses;
+	static ClassTracker g_AllClasses;
 
 };
 

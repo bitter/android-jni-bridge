@@ -4,7 +4,7 @@ namespace jni
 {
 
 jni::Class s_JNIBridgeClass("bitter/jnibridge/JNIBridge");
-ListOfCleanables ProxyObject::g_AllProxies;
+ProxyObject::ProxyTracker ProxyObject::g_AllProxies;
 
 JNIEXPORT jobject JNICALL Java_bitter_jnibridge_JNIBridge_00024InterfaceProxy_invoke(JNIEnv* env, jobject thiz, jlong ptr, jclass clazz, jobject method, jobjectArray args)
 {
@@ -101,6 +101,21 @@ void ProxyObject::DisableInstance(jobject proxy)
 {
 	static jmethodID disableProxyMID = jni::GetStaticMethodID(s_JNIBridgeClass, "disableInterfaceProxy", "(Ljava/lang/Object;)V");
 	jni::Op<jvoid>::CallStaticMethod(s_JNIBridgeClass, disableProxyMID, proxy);
+}
+
+void ProxyObject::ProxyTracker::Add(ProxyObject* target)
+{
+	list.Add(target);
+}
+
+void ProxyObject::ProxyTracker::Remove(ProxyObject* target)
+{
+	list.Remove(target);
+}
+
+void ProxyObject::ProxyTracker::CleanupAll()
+{
+	list.CleanupAll();
 }
 
 }
