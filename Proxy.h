@@ -14,7 +14,8 @@ public:
 		delete this;
 	}
 
-	ProxyObject* next;
+// Used by g_AllProxies in order to track and clean all ProxyObjects
+	ProxyObject* nextCleanListLink;
 
 	virtual jobject __Invoke(jclass clazz, jmethodID mid, jobjectArray args);
 // Cleanup all proxy objects

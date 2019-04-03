@@ -96,7 +96,8 @@ public:
 	Class(const char* name, jclass clazz = 0);
 	~Class();
 
-	Class* next;
+// Used by g_AllClasses in order to track and clean all Class objects
+	Class* nextCleanListLink;
 
 	inline operator jclass()
 	{

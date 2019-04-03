@@ -26,7 +26,7 @@ namespace jni
 		void Add(T* obj)
 		{
 			pthread_mutex_lock(&lock);
-			obj->next = head;
+			obj->nextCleanListLink = head;
 			head = obj;
 			pthread_mutex_unlock(&lock);
 		}
@@ -39,16 +39,16 @@ namespace jni
 			while (current != NULL && current != obj)
 			{
 				previous = current;
-				current = current->next;
+				current = current->nextCleanListLink;
 			}
 
 			if (current != NULL)
 			{
 				if (previous == NULL)
-					head = current->next;
+					head = current->nextCleanListLink;
 				else
-					previous->next = current->next;
-				current->next = NULL;
+					previous->nextCleanListLink = current->nextCleanListLink;
+				current->nextCleanListLink = NULL;
 			}
 			pthread_mutex_unlock(&lock);
 		}
@@ -61,7 +61,7 @@ namespace jni
 			while (current != NULL)
 			{
 				T* previous = current;
-				current = current->next;
+				current = current->nextCleanListLink;
 				previous->Cleanup();
 			}
 			pthread_mutex_unlock(&lock);
