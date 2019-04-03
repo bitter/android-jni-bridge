@@ -14,6 +14,8 @@ public:
 		delete this;
 	}
 
+	ProxyObject* next;
+
 	virtual jobject __Invoke(jclass clazz, jmethodID mid, jobjectArray args);
 // Cleanup all proxy objects
 	static void DeleteAllProxies();

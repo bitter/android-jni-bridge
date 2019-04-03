@@ -96,6 +96,8 @@ public:
 	Class(const char* name, jclass clazz = 0);
 	~Class();
 
+	Class* next;
+
 	inline operator jclass()
 	{
 		jclass result = m_Class;

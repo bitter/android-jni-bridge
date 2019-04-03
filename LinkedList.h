@@ -26,16 +26,17 @@ namespace jni
 		void Add(T* obj)
 		{
 			pthread_mutex_lock(&lock);
-			head = new Link(obj, head);
+			obj->next = head;
+			head = obj;
 			pthread_mutex_unlock(&lock);
 		}
 
 		void Remove(T* obj)
 		{
 			pthread_mutex_lock(&lock);
-			Link* current = head;
-			Link* previous = NULL;
-			while (current != NULL && current->obj != obj)
+			T* current = head;
+			T* previous = NULL;
+			while (current != NULL && current != obj)
 			{
 				previous = current;
 				current = current->next;
@@ -47,7 +48,7 @@ namespace jni
 					head = current->next;
 				else
 					previous->next = current->next;
-				delete current;
+				current->next = NULL;
 			}
 			pthread_mutex_unlock(&lock);
 		}
@@ -55,29 +56,18 @@ namespace jni
 		virtual void CleanupAll()
 		{
 			pthread_mutex_lock(&lock);
-			Link* current = head;
+			T* current = head;
 			head = NULL; // Destructor will call StopTracking, this will prevent it from looping through the whole list
 			while (current != NULL)
 			{
-				Link* previous = current;
+				T* previous = current;
 				current = current->next;
-				previous->obj->Cleanup();
-				delete previous;
+				previous->Cleanup();
 			}
 			pthread_mutex_unlock(&lock);
 		}
 
-	private:
-		class Link
-		{
-		public:
-			Link(T* target, Link* link) : obj(target), next(link) {}
-
-			T* obj;
-			Link* next;
-		};
-
-		Link* head;
+		T* head;
 		pthread_mutex_t lock;
 	};
 }
