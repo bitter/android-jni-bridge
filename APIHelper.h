@@ -1,6 +1,7 @@
 #pragma once
 
 #include "JNIBridge.h"
+#include "LinkedList.h"
 
 namespace jni
 {
@@ -39,6 +40,11 @@ public:
 		return *this;
 	}
 
+	void Cleanup()
+	{
+		Release();
+	}
+
 private:
 	class RefCounter
 	{
@@ -72,7 +78,7 @@ private:
 
 	void Release()
 	{
-		if (!m_Ref->Release())
+		if (m_Ref != NULL && !m_Ref->Release())
 		{
 			delete m_Ref;
 			m_Ref = NULL;
@@ -90,6 +96,9 @@ public:
 	Class(const char* name, jclass clazz = 0);
 	~Class();
 
+// Used by g_AllClasses in order to track and clean all Class objects
+	Class* nextCleanListLink;
+
 	inline operator jclass()
 	{
 		jclass result = m_Class;
@@ -98,13 +107,27 @@ public:
 		return m_Class = jni::FindClass(m_ClassName);
 	}
 
+	void Cleanup();
+	static void CleanupAllClasses();
+
 private:
 	Class(const Class& clazz);
 	Class& operator = (const Class& o);
 
 private:
+	class ClassTracker {
+	public:
+		void Add(Class* target);
+		void Remove(Class* target);
+		void CleanupAll();
+	private:
+		LinkedList<Class> list;
+	};
+
 	char*       m_ClassName;
 	Ref<GlobalRefAllocator, jclass> m_Class;
+	static ClassTracker g_AllClasses;
+
 };
 
 class Object
