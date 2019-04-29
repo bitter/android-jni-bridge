@@ -1,17 +1,22 @@
 #pragma once
 
 #include "API.h"
-#include <pthread.h>
+#include "LinkedList.h"
 
 namespace jni
 {
-
-class ProxyTracker;
 
 class ProxyObject : public virtual ProxyInvoker
 {
 // Dispatch invoke calls
 public:
+	void Cleanup() {
+		delete this;
+	}
+
+// Used by g_AllProxies in order to track and clean all ProxyObjects
+	ProxyObject* nextCleanListLink;
+
 	virtual jobject __Invoke(jclass clazz, jmethodID mid, jobjectArray args);
 // Cleanup all proxy objects
 	static void DeleteAllProxies();
@@ -30,45 +35,31 @@ protected:
 	static jobject NewInstance(void* nativePtr, const jobject* interfaces, size_t interfaces_len);
 	static void DisableInstance(jobject proxy);
 
-	static ProxyTracker proxyTracker;
-};
-
-
-class ProxyTracker 
-{
-public:
-	ProxyTracker();
-	~ProxyTracker();
-	void StartTracking(ProxyObject* obj);
-	void StopTracking(ProxyObject* obj);
-	void DeleteAllProxies();
-
-private:
-	class LinkedProxy
+	class ProxyTracker
 	{
 	public:
-		LinkedProxy(ProxyObject* target, LinkedProxy* link) : obj(target), next(link) {}
-
-		ProxyObject* obj;
-		LinkedProxy* next;
+		void Add(ProxyObject* target);
+		void Remove(ProxyObject* target);
+		void CleanupAll();
+	private:
+		LinkedList<ProxyObject> list;
 	};
 
-	LinkedProxy* head;
-	pthread_mutex_t lock;
+	static ProxyTracker g_AllProxies;
 };
 
 template <class RefAllocator, class ...TX>
 class ProxyGenerator : public ProxyObject, public TX::__Proxy...
-{	
+{
 protected:
 	ProxyGenerator() : m_ProxyObject(NewInstance(this, (jobject[]){TX::__CLASS...}, sizeof...(TX)))	
 	{
-		proxyTracker.StartTracking(this);
+		g_AllProxies.Add(this);
 	}
 
 	virtual ~ProxyGenerator()
 	{
-		proxyTracker.StopTracking(this);
+		g_AllProxies.Remove(this);
 		DisableInstance(__ProxyObject());
 	}
 

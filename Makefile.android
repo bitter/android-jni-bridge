@@ -30,7 +30,7 @@ else ifeq (${ABI}, armeabi-v7a)
         NDK_ARCH           := arch-arm
         TRIPLE             := arm-linux-androideabi
         GCC_TOOLCHAIN      := arm-linux-androideabi-${GCC_VERSION}
-        CPPFLAGS           := ${CPPFLAGS} -target armv7-none-linux-androideabi -march=armv7-a -mfpu=neon-fp16 -mfloat-abi=softfp
+        CPPFLAGS           := ${CPPFLAGS} -target armv7-none-linux-androideabi -march=armv7-a -mthumb -mfpu=neon-fp16 -mfloat-abi=softfp
         LLVM_FLAGS          = -gcc-toolchain ${GCC_TOOLCHAIN_PATH}
         DEFINES            := ${DEFINES} -DARCH_ARMEABIV7A
         LDFLAGS            := -Wl,--fix-cortex-a8
