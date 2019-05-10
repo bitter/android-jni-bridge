@@ -19,7 +19,8 @@ endif
 JAVAFLAGS	= -XX:MaxPermSize=128M
 JAVACFLAGS  = -source 1.8 -target 1.8
 
-CPPFLAGS	+= -g0 -O2 -Wall -Werror -Wno-long-long -std=c++11
+# We use -O2 as it produces smaller size than the -Os. Tested with NDKr19.
+CPPFLAGS	+= -g0 -O2 -Wall -Werror -Wno-long-long -std=c++11 -fno-addrsig
 
 BUILDDIR	= build
 GENDIR		= ${BUILDDIR}/${APINAME}/source
