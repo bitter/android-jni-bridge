@@ -18,6 +18,14 @@ ifeq (${ABI}, x86)
         GCC_TOOLCHAIN      := x86-${GCC_VERSION}
         CPPFLAGS           := ${CPPFLAGS} -target i686-none-linux-android -march=i686
         LLVM_FLAGS          = -gcc-toolchain ${GCC_TOOLCHAIN_PATH}
+else ifeq (${ABI}, x86_64)
+        NDK_ARCH           := arch-x86_64
+        TRIPLE             := x86_64-linux-android
+        GCC_TOOLCHAIN      := x86_64-${GCC_VERSION}
+        CPPFLAGS           := ${CPPFLAGS} -target x86_64-none-linux-android
+        LLVM_FLAGS          = -gcc-toolchain ${GCC_TOOLCHAIN_PATH}
+        APIRAW             := 21
+        API                := android-21
 else ifeq (${ABI}, arm64-v8a)
         NDK_ARCH           := arch-arm64
         TRIPLE             := aarch64-linux-android
