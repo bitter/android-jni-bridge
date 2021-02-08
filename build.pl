@@ -70,6 +70,7 @@ my @classes = (
 	'::java::util::Map_Entry',
 	'::java::util::NoSuchElementException',
 	'::java::util::Scanner',
+	'::java::util::zip::ZipFile',
 	'::javax::net::ssl::X509TrustManager',
 	'::javax::net::ssl::TrustManagerFactory',
 	'::java::security::KeyStore',
