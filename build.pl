@@ -1,4 +1,8 @@
 #!/usr/bin/env perl -w
+use Cwd qw( abs_path );
+use File::Basename qw( dirname );
+use lib dirname(abs_path($0));
+
 use PrepareAndroidSDK;
 use File::Path;
 use strict;
@@ -66,6 +70,7 @@ my @classes = (
 	'::java::util::Map_Entry',
 	'::java::util::NoSuchElementException',
 	'::java::util::Scanner',
+	'::java::util::zip::ZipFile',
 	'::javax::net::ssl::X509TrustManager',
 	'::javax::net::ssl::TrustManagerFactory',
 	'::java::security::KeyStore',
