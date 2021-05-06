@@ -101,7 +101,7 @@ sub ZipIt
 	system("mkdir -p build/temp/include") && die("Failed to create temp directory.");
 
 	# write build info
-	my $git_info = qx(git symbolic-ref -q HEAD && git rev-parse HEAD);
+	my $git_info = "$ENV{GIT_BRANCH}\n$ENV{GIT_REVISION}\n$ENV{GIT_REPOSITORY_URL}";
 	open(BUILD_INFO_FILE, '>', "build/temp/build.txt") or die("Unable to write build information to build/temp/build.txt");
 	print BUILD_INFO_FILE "$git_info";
 	close(BUILD_INFO_FILE);

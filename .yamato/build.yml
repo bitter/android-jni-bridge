@@ -1,0 +1,14 @@
+name: Build JNIBridge
+
+agent:
+  type: Unity::VM::osx
+  image: build-system/unity-extra-macos-10.13-katana:v0.3.6-621005
+  flavor: b1.xlarge
+
+commands:
+  - perl build.pl
+
+artifacts:
+  artifacts:
+    paths:
+      - build/builds.zip
