@@ -16,7 +16,7 @@ int main(int,char**)
 	JavaVMInitArgs vm_args;
 	memset(&vm_args, 0, sizeof(vm_args));
 
-	char classPath[] = {"-Djava.class.path=../build"};
+	char classPath[] = {"-Djava.class.path=build"};
 
 	JavaVMOption options[1];
 	options[0].optionString = classPath;
@@ -276,6 +276,11 @@ int main(int,char**)
 			virtual ::java::lang::Object Next()
 			{
 				return ::java::lang::String("this is a string");
+			}
+
+			virtual void ForEachRemaining(const ::java::util::function::Consumer& arg0)
+			{
+				printf("ForEachRemaining[%p]!\n", this);
 			}
 
 		private:
