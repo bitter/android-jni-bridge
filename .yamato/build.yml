@@ -28,7 +28,7 @@ test_trigger:
     image: build-system/unity-extra-macos-10.13-katana:v0.3.6-621005
     flavor: b1.xlarge
   commands:
-    - dir
+    - true
   triggers:
     branches:
       only:
