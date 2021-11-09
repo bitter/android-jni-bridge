@@ -53,7 +53,7 @@ GCC_TOOL_PREFIX        = ${GCC_TOOLCHAIN_PATH}/bin/${TRIPLE}-
 CPPSYSROOT             = ${NDK}/sysroot
 ISYSTEM                = ${CPPSYSROOT}/usr/include/${TRIPLE}
 LDSYSROOT              = ${NDK}/platforms/${API}/${NDK_ARCH}
-CPPFLAGS              := ${CPPFLAGS} --sysroot=${CPPSYSROOT} -I${ISYSTEM} -fpic -ffunction-sections -fdata-sections -fstrict-aliasing -fvisibility=hidden -MMD
+CPPFLAGS              := ${CPPFLAGS} --sysroot=${CPPSYSROOT} -I${ISYSTEM} -fpic -fno-addrsig -ffunction-sections -fdata-sections -fstrict-aliasing -fvisibility=hidden -MMD
 CXXFLAGS              := ${CXXFLAGS} -fno-rtti -fno-exceptions
 LDFLAGS               := ${LDFLAGS} --sysroot=${LDSYSROOT} -Wl,--no-undefined -Wl,--gc-sections
 CXX                    = ${LLVM_TOOL_PREFIX}clang++ ${DEFINES} ${LLVM_FLAGS}
