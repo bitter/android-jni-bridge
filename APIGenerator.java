@@ -471,7 +471,6 @@ public class APIGenerator
 		for (Class clazz : m_VisitedClasses)
 		{
 			PrintStream source = new PrintStream(new FileOutputStream(new File(dst, clazz.getCanonicalName() + ".cpp")));
-			source.format("#include <utility>\n");
 			source.format("#include \"API.h\"\n");
 			implementClass(source, clazz);
 			source.close();

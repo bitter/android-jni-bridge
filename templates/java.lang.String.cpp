@@ -35,7 +35,7 @@ String& String::operator = (String&& other)
 		jni::ReleaseStringUTFChars(*this, m_Str);
 	m_Str = other.m_Str;
 	other.m_Str = 0;
-	m_Object = std::move(other.m_Object);
+	m_Object = static_cast<jni::Ref<jni::GlobalRefAllocator, jobject>&&>(other.m_Object);
 	return *this;
 }
 
