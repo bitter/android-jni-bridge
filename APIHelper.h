@@ -25,9 +25,10 @@ class Ref
 public:
 	Ref(ObjType object) { m_Ref = new RefCounter(object); }
 	Ref(const Ref<RefType,ObjType>& o) { Aquire(o.m_Ref); }
+	Ref(Ref<RefType, ObjType>&& o) : m_Ref(o.m_Ref) { o.m_Ref = nullptr; }
 	~Ref() { Release(); }
 
-	inline operator ObjType() const	{ return *m_Ref; }
+	inline operator ObjType() const	{ return m_Ref ? static_cast<ObjType>(*m_Ref) : static_cast<ObjType>(0); }
 	Ref<RefType,ObjType>& operator = (const Ref<RefType,ObjType>& o)
 	{
 		if (m_Ref == o.m_Ref)
@@ -36,6 +37,15 @@ public:
 		Release();
 		Aquire(o.m_Ref);
 
+		return *this;
+	}
+	Ref<RefType, ObjType>& operator= (Ref<RefType, ObjType>&& o)
+	{
+		if (m_Ref == o.m_Ref)
+			return *this;
+
+		m_Ref = o.m_Ref;
+		o.m_Ref = nullptr;
 		return *this;
 	}
 
@@ -72,7 +82,7 @@ private:
 
 	void Release()
 	{
-		if (!m_Ref->Release())
+		if (m_Ref && !m_Ref->Release())
 		{
 			delete m_Ref;
 			m_Ref = NULL;
