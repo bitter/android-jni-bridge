@@ -29,6 +29,16 @@ String& String::operator = (const String& other)
 	return *this;
 }
 
+String& String::operator = (String&& other)
+{
+	if (m_Str)
+		jni::ReleaseStringUTFChars(*this, m_Str);
+	m_Str = other.m_Str;
+	other.m_Str = 0;
+	m_Object = std::move(other.m_Object);
+	return *this;
+}
+
 const char* String::c_str()
 {
 	if (m_Object && !m_Str)

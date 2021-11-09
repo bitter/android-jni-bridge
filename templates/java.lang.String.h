@@ -2,6 +2,7 @@ String(const char* str);
 ~String();
 
 String& operator = (const String& other);
+String& operator = (String&& other);
 bool EmptyOrNull();
 
 const char* c_str();
