@@ -363,6 +363,27 @@ int main(int,char**)
 		printf("Value of copy-assigned integer: %d\n", static_cast<jint>(integer));
 	}
 
+	// -------------------------------------------------------------
+	// Move semantics for String class
+	// -------------------------------------------------------------
+	{
+		jni::LocalFrame frame;
+
+		java::lang::String str("hello");
+		printf("Java string: %s\n", str.c_str());
+
+		java::lang::String str_moved("other");
+		str_moved = std::move(str);
+
+		if (static_cast<jobject>(str) != 0)
+		{
+			puts("str was supposed to be moved from when assigning");
+			abort();
+		}
+
+		printf("Moved string: %s\n", str_moved.c_str());
+	}
+
 	printf("%s\n", "EOP");
 
 	// print resolution of clock()
