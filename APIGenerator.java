@@ -613,11 +613,24 @@ public class APIGenerator
 			getSimpleName(clazz),
 			getSuperClassName(clazz),
 			hasTemplate ? " __Initialize(); " : "");
+		out.format("\t%s(%s&& o) = default;\n",
+			getSimpleName(clazz),
+			getSimpleName(clazz));
 		if (hasTemplate)
 		{
 			out.format("%s\n",	new Scanner(templateFile).useDelimiter("\\Z").next());
 			out.format("private:\n");
 			out.format("\tvoid __Initialize();\n");
+		}
+		else
+		{
+			// Standard assignment operators
+			out.format("\t%s& operator=(const %s& o) = default;\n",
+				getSimpleName(clazz),
+				getSimpleName(clazz));
+			out.format("\t%s& operator=(%s&& o) = default;\n",
+				getSimpleName(clazz),
+				getSimpleName(clazz));
 		}
 		out.format("\n");
 	}
