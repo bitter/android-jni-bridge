@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <utility>
 
 #include "API.h"
 #include "Proxy.h"
@@ -327,6 +328,39 @@ int main(int,char**)
 		printf("equals: %d\n", runnable.Equals(runnable));
 		printf("hashcode: %d\n", runnable.HashCode());
 		printf("toString: %s\n", runnable.ToString().c_str());
+	}
+
+
+	// -------------------------------------------------------------
+	// Move semantics
+	// -------------------------------------------------------------
+	{
+		jni::LocalFrame frame;
+
+		java::lang::Integer integer(1234);
+		java::lang::Integer integer_moved(std::move(integer));
+
+		if (static_cast<jobject>(integer) != 0)
+		{
+			puts("Interger was supposed to be moved from!!!!");
+			abort();
+		}
+
+		printf("Value of moved integer: %d\n", static_cast<jint>(integer_moved));
+
+		java::lang::Integer integer_assigned(4321);
+		integer_assigned = std::move(integer_moved);
+
+		if (static_cast<jobject>(integer_moved) != 0)
+		{
+			puts("integer_moved was supposed to be moved from when assigning!!!!");
+			abort();
+		}
+
+		printf("Value of move-assigned integer: %d\n", static_cast<jint>(integer_assigned));
+
+		integer = integer_assigned;
+		printf("Value of copy-assigned integer: %d\n", static_cast<jint>(integer));
 	}
 
 	printf("%s\n", "EOP");
