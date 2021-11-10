@@ -375,13 +375,23 @@ int main(int,char**)
 		java::lang::String str_moved("other");
 		str_moved = std::move(str);
 
-		if (static_cast<jobject>(str) != 0)
+		if (static_cast<jobject>(str) != 0 || str.c_str() != nullptr)
 		{
 			puts("str was supposed to be moved from when assigning");
 			abort();
 		}
 
 		printf("Moved string: %s\n", str_moved.c_str());
+
+		java::lang::String str_ctor_moved(std::move(str_moved));
+
+		if (static_cast<jobject>(str_moved) != 0 || str_moved.c_str() != nullptr)
+		{
+			puts("str_moved was supposed to be moved from when assigning");
+			abort();
+		}
+
+		printf("Moved string via constructor: %s\n", str_ctor_moved.c_str());
 	}
 
 	printf("%s\n", "EOP");
