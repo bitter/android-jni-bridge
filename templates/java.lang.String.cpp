@@ -38,6 +38,9 @@ String& String::operator = (const String& other)
 
 String& String::operator = (String&& other)
 {
+	if (&other == this)
+		return *this;
+
 	if (m_Str)
 		jni::ReleaseStringUTFChars(*this, m_Str);
 	m_Str = other.m_Str;
