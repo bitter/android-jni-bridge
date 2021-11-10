@@ -613,9 +613,6 @@ public class APIGenerator
 			getSimpleName(clazz),
 			getSuperClassName(clazz),
 			hasTemplate ? " __Initialize(); " : "");
-		out.format("\t%s(%s&& o) = default;\n",
-			getSimpleName(clazz),
-			getSimpleName(clazz));
 		if (hasTemplate)
 		{
 			out.format("%s\n",	new Scanner(templateFile).useDelimiter("\\Z").next());
@@ -624,6 +621,10 @@ public class APIGenerator
 		}
 		else
 		{
+			// Move constructor
+			out.format("\t%s(%s&& o) = default;\n",
+				getSimpleName(clazz),
+				getSimpleName(clazz));
 			// Standard assignment operators
 			out.format("\t%s& operator=(const %s& o) = default;\n",
 				getSimpleName(clazz),
