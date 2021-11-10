@@ -4,6 +4,7 @@
 // --------------------------------------------------------
 // Copied from android::os::BaseBundle
 // --------------------------------------------------------
+Bundle(Bundle&& o) = default;
 Bundle& operator=(const Bundle& o) = default;
 Bundle& operator=(Bundle&& o) = default;
 ::java::lang::Object Get(const ::java::lang::String& arg0) const;

@@ -1,3 +1,4 @@
+Number(Number&& o) = default;
 Number& operator=(const Number& o) = default;
 Number& operator=(Number&& o) = default;
 operator ::jbyte() const;
