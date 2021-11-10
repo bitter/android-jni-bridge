@@ -1,3 +1,10 @@
+String::String(String&& o)
+	: Object(static_cast<Object&&>(o))
+	, m_Str(o.m_Str)
+{
+	o.m_Str = 0;
+}
+
 String::String(const char* str) : ::java::lang::Object(str ? jni::NewStringUTF(str) : NULL) { __Initialize(); }
 String::~String()
 {

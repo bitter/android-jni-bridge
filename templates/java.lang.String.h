@@ -1,3 +1,4 @@
+String(String&& o);
 String(const char* str);
 ~String();
 
