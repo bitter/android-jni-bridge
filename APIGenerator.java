@@ -619,6 +619,20 @@ public class APIGenerator
 			out.format("private:\n");
 			out.format("\tvoid __Initialize();\n");
 		}
+		else
+		{
+			// Move constructor
+			out.format("\t%s(%s&& o) = default;\n",
+				getSimpleName(clazz),
+				getSimpleName(clazz));
+			// Standard assignment operators
+			out.format("\t%s& operator=(const %s& o) = default;\n",
+				getSimpleName(clazz),
+				getSimpleName(clazz));
+			out.format("\t%s& operator=(%s&& o) = default;\n",
+				getSimpleName(clazz),
+				getSimpleName(clazz));
+		}
 		out.format("\n");
 	}
 

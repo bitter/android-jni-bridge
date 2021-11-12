@@ -1,3 +1,10 @@
+String::String(String&& o)
+	: Object(static_cast<Object&&>(o))
+	, m_Str(o.m_Str)
+{
+	o.m_Str = 0;
+}
+
 String::String(const char* str) : ::java::lang::Object(str ? jni::NewStringUTF(str) : NULL) { __Initialize(); }
 String::~String()
 {
@@ -26,6 +33,19 @@ String& String::operator = (const String& other)
 	m_Str = 0;
 
 	m_Object = other.m_Object;
+	return *this;
+}
+
+String& String::operator = (String&& other)
+{
+	if (&other == this)
+		return *this;
+
+	if (m_Str)
+		jni::ReleaseStringUTFChars(*this, m_Str);
+	m_Str = other.m_Str;
+	other.m_Str = 0;
+	m_Object = static_cast<jni::Ref<jni::GlobalRefAllocator, jobject>&&>(other.m_Object);
 	return *this;
 }
 

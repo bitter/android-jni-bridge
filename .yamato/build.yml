@@ -1,14 +1,37 @@
-name: Build JNIBridge
-
-agent:
-  type: Unity::VM::osx
-  image: build-system/unity-extra-macos-10.13-katana:v0.3.6-621005
-  flavor: b1.xlarge
-
-commands:
-  - perl build.pl
-
-artifacts:
+build_for_android:
+  name: Build JNIBridge
+  agent:
+    type: Unity::VM::osx
+    image: build-system/unity-extra-macos-10.13-katana:v0.3.6-621005
+    flavor: b1.xlarge
+  commands:
+    - perl build.pl
   artifacts:
-    paths:
-      - build/builds.zip
+    artifacts:
+      paths:
+        - build/builds.zip
+
+test_on_osx:
+  name: Test on OSX
+  agent:
+    type: Unity::VM::osx
+    image: build-system/unity-extra-macos-10.13-katana:v0.3.6-621005
+    flavor: b1.xlarge
+  commands:
+    - perl build-osx.pl
+    - make -f test/Makefile
+
+test_trigger:
+  name: Tests Trigger
+  agent:
+    type: Unity::VM::osx
+    image: build-system/unity-extra-macos-10.13-katana:v0.3.6-621005
+    flavor: b1.xlarge
+  commands:
+    - true
+  triggers:
+    branches:
+      only:
+        - "/.*/"
+  dependencies:
+    - .yamato/build.yml#test_on_osx
