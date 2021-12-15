@@ -47,6 +47,7 @@ our $sdks =
     "android-23" => "android-23_r02.zip",
     "android-26" => "platform-26_r02.zip",
     "android-28" => "platform-28_r06.zip",
+    "android-31" => "platform-31_r01.zip",
     };
 
 our $sdk_tools =
@@ -59,18 +60,18 @@ our $sdk_tools =
 
 our $platform_tools =
     {
-    "version" => "28.0.1",
-    "windows" => "platform-tools_r28.0.1-windows.zip",
-    "linux"   => "platform-tools_r28.0.1-linux.zip",
-    "macosx"  => "platform-tools_r28.0.1-darwin.zip",
+    "version" => "31.0.3",
+    "windows" => "platform-tools_r31.0.3-windows.zip",
+    "linux"   => "platform-tools_r31.0.3-linux.zip",
+    "macosx"  => "platform-tools_r31.0.3-darwin.zip",
     };
 
 our $build_tools =
     {
-    "version" => "28.0.3",
-    "windows" => "build-tools_r28.0.3-windows.zip",
-    "linux"   => "build-tools_r28.0.3-linux.zip",
-    "macosx"  => "build-tools_r28.0.3-macosx.zip",
+    "version" => "29.0.2",
+    "windows" => "build-tools_r29.0.2-windows.zip",
+    "linux"   => "build-tools_r29.0.2-linux.zip",
+    "macosx"  => "build-tools_r29.0.2-macosx.zip",
     };
 
 our $gpss =
@@ -109,6 +110,12 @@ our $ndks =
         "macosx"  => "android-ndk-r19-darwin-x86_64.zip",
         "linux"   => "android-ndk-r19-linux-x86_64.zip",
         },
+    "r21" =>
+        {
+        "windows" => "android-ndk-r21d-windows-x86_64.zip",
+        "macosx"  => "android-ndk-r21d-darwin-x86_64.zip",
+        "linux"   => "android-ndk-r21d-linux-x86_64.zip",
+        },
     };
 
 our $sourcePropVersions =
@@ -117,6 +124,7 @@ our $sourcePropVersions =
     "16.1.4479499" => "r16b (64-bit)",
     "17.0.4754217" => "r17 (64-bit)",
     "19.0.5232133" => "r19 (64-bit)",
+    "21.3.6528147" => "r21 (64-bit)",
     };
 
 our ($HOST_ENV, $TMP, $HOME, $WINZIP);
